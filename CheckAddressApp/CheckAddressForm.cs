@@ -27,8 +27,41 @@ namespace CheckAddressApp
         {
             _loqateAddressApiService.Dispose();
         }
+        private void clearGoogleResponse()
+        {
+            googleResponseRegionCodeTextBox.Text = "";
+            googleResponseLocalityTextBox.Text = "";
+            googleResponseAdministrativeAreaTextBox.Text = "";
+            googleResponseLanguageCodeTextBox.Text = "";
+            googleResponsePostalCodeTextBox.Text = "";
+            googleResponseSortingCodeTextBox.Text = "";
+            googleResponseSublocalityTextBox.Text = "";
+            googleResponseFormattedAddressTextBox.Text = "";
+            googleResponseOutputTextBox.Text = "";
+        }
+
+        private void clearLoqateResponse()
+        {
+            loqateResponseDataGridView.Rows.Clear();
+            loqateResponseListBox.Items.Clear();
+            loqateResponseVerificationLavelTextBox.Text = "";
+        }
+
+        private void fillRequestAddress()
+        {
+            var requestAddress = (regionCodeComboBox.Text != "" ? $"{regionCodeComboBox.Text} ," : "") +
+                $"{addressTextBox.Text}" +
+                (localityTextBox.Text != "" ? $", {localityTextBox.Text}" : "") +
+                (sublocalityTextBox.Text != "" ? $", {sublocalityTextBox.Text}" : "") +
+                (administrativeAreaTextBox.Text != "" ? $", {administrativeAreaTextBox.Text}" : "") +
+                (postalCodeTextBox.Text != "" ? $", {postalCodeTextBox.Text}" : "");
+
+            requestAddressTextBox.Text = requestAddress;
+        }
         private async Task loqateValidation()
         {
+            clearLoqateResponse();
+
             var request = new Models.Loqate.ValidateAddressRequest
             {
                 Key = _conf["Loqate:ApiKey"],
@@ -50,7 +83,7 @@ namespace CheckAddressApp
             var reponse = responses.FirstOrDefault();
 
             _loqateValidateResponse = reponse;
-            loqateResponseListBox.Items.Clear();
+
 
             var addresses = reponse.Matches.Select(m => m.Address ?? "None").ToArray();
 
@@ -61,6 +94,8 @@ namespace CheckAddressApp
         }
         private async Task googleValidation()
         {
+            clearGoogleResponse();
+
             var address = new PostalAddress()
             {
                 RegionCode = regionCodeComboBox.Text,
@@ -104,6 +139,8 @@ namespace CheckAddressApp
 
         private async void checkButton_Click(object sender, EventArgs e)
         {
+            fillRequestAddress();
+
             if (googleMapsCheckBox.Checked)
             {
                 await googleValidation();
@@ -123,19 +160,13 @@ namespace CheckAddressApp
             administrativeAreaTextBox.Text = "";
             postalCodeTextBox.Text = "";
             sublocalityTextBox.Text = "";
+            requestAddressTextBox.Text = "";
+            regionCodeComboBox.SelectedItem = null;
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            googleResponseRegionCodeTextBox.Text = "";
-            googleResponseLocalityTextBox.Text = "";
-            googleResponseAdministrativeAreaTextBox.Text = "";
-            googleResponseLanguageCodeTextBox.Text = "";
-            googleResponsePostalCodeTextBox.Text = "";
-            googleResponseSortingCodeTextBox.Text = "";
-            googleResponseSublocalityTextBox.Text = "";
-            googleResponseFormattedAddressTextBox.Text = "";
-            googleResponseOutputTextBox.Text = "";
+            clearGoogleResponse();
         }
 
         private void addressTextBox_TextChanged(object sender, EventArgs e)
@@ -154,6 +185,8 @@ namespace CheckAddressApp
 
         private async void autocompleteButton_Click(object sender, EventArgs e)
         {
+            fillRequestAddress();
+            clearGoogleResponse();
             apiTabControl.SelectTab(0);
 
             var autocompleteAddressRequest = new AutocompleteAddressRequest(addressTextBox.Text);
@@ -164,11 +197,6 @@ namespace CheckAddressApp
             {
                 googleResponseOutputTextBox.Text = string.Join("", suggestions);
             }
-        }
-
-        private void loqateResponseListBox_DrawItem(object sender, DrawItemEventArgs e)
-        {
-
         }
 
         private void loqateResponseListBox_SelectedIndexChanged(object sender, EventArgs e)
@@ -194,9 +222,7 @@ namespace CheckAddressApp
 
         private void button3_Click(object sender, EventArgs e)
         {
-            loqateResponseDataGridView.Rows.Clear();
-            loqateResponseListBox.Items.Clear();
-            loqateResponseVerificationLavelTextBox.Text = "";
+            clearLoqateResponse();
         }
     }
 }
