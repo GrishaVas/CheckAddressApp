@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             addressTextBox = new TextBox();
             label1 = new Label();
             checkButton = new Button();
@@ -63,6 +64,8 @@
             button2 = new Button();
             apiTabControl = new TabControl();
             googleMapsTabPage = new TabPage();
+            googleResponseStreetTextBox = new TextBox();
+            label45 = new Label();
             loqateTabPage = new TabPage();
             button3 = new Button();
             loqateResponseVerificationLavelTextBox = new TextBox();
@@ -81,6 +84,8 @@
             loqateCheckBox = new CheckBox();
             googleMapsCheckBox = new CheckBox();
             autocompleteButton = new Button();
+            addressFieldErrorProvider = new ErrorProvider(components);
+            apiChoiceErorProvider = new ErrorProvider(components);
             apiTabControl.SuspendLayout();
             googleMapsTabPage.SuspendLayout();
             loqateTabPage.SuspendLayout();
@@ -88,6 +93,8 @@
             groupBox1.SuspendLayout();
             inputGroupBox.SuspendLayout();
             apiGroupBox.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)addressFieldErrorProvider).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)apiChoiceErorProvider).BeginInit();
             SuspendLayout();
             // 
             // addressTextBox
@@ -109,7 +116,6 @@
             // 
             // checkButton
             // 
-            checkButton.Enabled = false;
             checkButton.Location = new Point(532, 160);
             checkButton.Name = "checkButton";
             checkButton.Size = new Size(95, 39);
@@ -164,16 +170,16 @@
             // 
             // googleResponseFormattedAddressTextBox
             // 
-            googleResponseFormattedAddressTextBox.Location = new Point(6, 30);
+            googleResponseFormattedAddressTextBox.Location = new Point(6, 36);
             googleResponseFormattedAddressTextBox.Name = "googleResponseFormattedAddressTextBox";
             googleResponseFormattedAddressTextBox.ReadOnly = true;
-            googleResponseFormattedAddressTextBox.Size = new Size(554, 27);
+            googleResponseFormattedAddressTextBox.Size = new Size(527, 27);
             googleResponseFormattedAddressTextBox.TabIndex = 9;
             // 
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(6, 7);
+            label4.Location = new Point(6, 13);
             label4.Name = "label4";
             label4.Size = new Size(135, 20);
             label4.TabIndex = 10;
@@ -200,9 +206,9 @@
             label7.AutoSize = true;
             label7.Location = new Point(532, 26);
             label7.Name = "label7";
-            label7.Size = new Size(95, 20);
+            label7.Size = new Size(99, 20);
             label7.TabIndex = 15;
-            label7.Text = "Region Code";
+            label7.Text = "Country Code";
             // 
             // label8
             // 
@@ -239,7 +245,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(7, 275);
+            label5.Location = new Point(365, 142);
             label5.Name = "label5";
             label5.Size = new Size(113, 20);
             label5.TabIndex = 33;
@@ -248,7 +254,7 @@
             // label12
             // 
             label12.AutoSize = true;
-            label12.Location = new Point(7, 383);
+            label12.Location = new Point(365, 79);
             label12.Name = "label12";
             label12.Size = new Size(140, 20);
             label12.TabIndex = 31;
@@ -256,7 +262,7 @@
             // 
             // googleResponseAdministrativeAreaTextBox
             // 
-            googleResponseAdministrativeAreaTextBox.Location = new Point(7, 407);
+            googleResponseAdministrativeAreaTextBox.Location = new Point(365, 103);
             googleResponseAdministrativeAreaTextBox.Name = "googleResponseAdministrativeAreaTextBox";
             googleResponseAdministrativeAreaTextBox.ReadOnly = true;
             googleResponseAdministrativeAreaTextBox.Size = new Size(168, 27);
@@ -265,7 +271,7 @@
             // label13
             // 
             label13.AutoSize = true;
-            label13.Location = new Point(7, 329);
+            label13.Location = new Point(365, 206);
             label13.Name = "label13";
             label13.Size = new Size(96, 20);
             label13.TabIndex = 29;
@@ -273,7 +279,7 @@
             // 
             // googleResponseSortingCodeTextBox
             // 
-            googleResponseSortingCodeTextBox.Location = new Point(7, 353);
+            googleResponseSortingCodeTextBox.Location = new Point(365, 230);
             googleResponseSortingCodeTextBox.Name = "googleResponseSortingCodeTextBox";
             googleResponseSortingCodeTextBox.ReadOnly = true;
             googleResponseSortingCodeTextBox.Size = new Size(168, 27);
@@ -282,7 +288,7 @@
             // label14
             // 
             label14.AutoSize = true;
-            label14.Location = new Point(6, 222);
+            label14.Location = new Point(6, 333);
             label14.Name = "label14";
             label14.Size = new Size(95, 20);
             label14.TabIndex = 27;
@@ -291,7 +297,7 @@
             // label15
             // 
             label15.AutoSize = true;
-            label15.Location = new Point(6, 169);
+            label15.Location = new Point(6, 270);
             label15.Name = "label15";
             label15.Size = new Size(87, 20);
             label15.TabIndex = 26;
@@ -299,7 +305,7 @@
             // 
             // googleResponsePostalCodeTextBox
             // 
-            googleResponsePostalCodeTextBox.Location = new Point(6, 192);
+            googleResponsePostalCodeTextBox.Location = new Point(6, 293);
             googleResponsePostalCodeTextBox.Name = "googleResponsePostalCodeTextBox";
             googleResponsePostalCodeTextBox.ReadOnly = true;
             googleResponsePostalCodeTextBox.Size = new Size(169, 27);
@@ -308,7 +314,7 @@
             // label16
             // 
             label16.AutoSize = true;
-            label16.Location = new Point(6, 116);
+            label16.Location = new Point(6, 206);
             label16.Name = "label16";
             label16.Size = new Size(82, 20);
             label16.TabIndex = 37;
@@ -316,7 +322,7 @@
             // 
             // googleResponseSublocalityTextBox
             // 
-            googleResponseSublocalityTextBox.Location = new Point(6, 139);
+            googleResponseSublocalityTextBox.Location = new Point(6, 229);
             googleResponseSublocalityTextBox.Name = "googleResponseSublocalityTextBox";
             googleResponseSublocalityTextBox.ReadOnly = true;
             googleResponseSublocalityTextBox.Size = new Size(169, 27);
@@ -325,7 +331,7 @@
             // label17
             // 
             label17.AutoSize = true;
-            label17.Location = new Point(6, 63);
+            label17.Location = new Point(6, 137);
             label17.Name = "label17";
             label17.Size = new Size(60, 20);
             label17.TabIndex = 35;
@@ -333,7 +339,7 @@
             // 
             // googleResponseLocalityTextBox
             // 
-            googleResponseLocalityTextBox.Location = new Point(6, 86);
+            googleResponseLocalityTextBox.Location = new Point(6, 166);
             googleResponseLocalityTextBox.Name = "googleResponseLocalityTextBox";
             googleResponseLocalityTextBox.ReadOnly = true;
             googleResponseLocalityTextBox.Size = new Size(169, 27);
@@ -341,7 +347,7 @@
             // 
             // googleResponseRegionCodeTextBox
             // 
-            googleResponseRegionCodeTextBox.Location = new Point(6, 245);
+            googleResponseRegionCodeTextBox.Location = new Point(6, 356);
             googleResponseRegionCodeTextBox.Name = "googleResponseRegionCodeTextBox";
             googleResponseRegionCodeTextBox.ReadOnly = true;
             googleResponseRegionCodeTextBox.Size = new Size(169, 27);
@@ -349,7 +355,7 @@
             // 
             // googleResponseLanguageCodeTextBox
             // 
-            googleResponseLanguageCodeTextBox.Location = new Point(7, 299);
+            googleResponseLanguageCodeTextBox.Location = new Point(365, 166);
             googleResponseLanguageCodeTextBox.Name = "googleResponseLanguageCodeTextBox";
             googleResponseLanguageCodeTextBox.ReadOnly = true;
             googleResponseLanguageCodeTextBox.Size = new Size(168, 27);
@@ -387,6 +393,8 @@
             // 
             // googleMapsTabPage
             // 
+            googleMapsTabPage.Controls.Add(googleResponseStreetTextBox);
+            googleMapsTabPage.Controls.Add(label45);
             googleMapsTabPage.Controls.Add(googleResponseOutputTextBox);
             googleMapsTabPage.Controls.Add(label2);
             googleMapsTabPage.Controls.Add(button1);
@@ -413,6 +421,23 @@
             googleMapsTabPage.TabIndex = 0;
             googleMapsTabPage.Text = "Google Maps";
             googleMapsTabPage.UseVisualStyleBackColor = true;
+            // 
+            // googleResponseStreetTextBox
+            // 
+            googleResponseStreetTextBox.Location = new Point(6, 103);
+            googleResponseStreetTextBox.Name = "googleResponseStreetTextBox";
+            googleResponseStreetTextBox.ReadOnly = true;
+            googleResponseStreetTextBox.Size = new Size(169, 27);
+            googleResponseStreetTextBox.TabIndex = 45;
+            // 
+            // label45
+            // 
+            label45.AutoSize = true;
+            label45.Location = new Point(6, 79);
+            label45.Name = "label45";
+            label45.Size = new Size(48, 20);
+            label45.TabIndex = 44;
+            label45.Text = "Street";
             // 
             // loqateTabPage
             // 
@@ -589,6 +614,7 @@
             loqateCheckBox.TabIndex = 1;
             loqateCheckBox.Text = "Loqate";
             loqateCheckBox.UseVisualStyleBackColor = true;
+            loqateCheckBox.CheckedChanged += loqateCheckBox_CheckedChanged;
             // 
             // googleMapsCheckBox
             // 
@@ -599,10 +625,10 @@
             googleMapsCheckBox.TabIndex = 0;
             googleMapsCheckBox.Text = "Google Maps";
             googleMapsCheckBox.UseVisualStyleBackColor = true;
+            googleMapsCheckBox.CheckedChanged += googleMapsCheckBox_CheckedChanged;
             // 
             // autocompleteButton
             // 
-            autocompleteButton.Enabled = false;
             autocompleteButton.Location = new Point(413, 160);
             autocompleteButton.Name = "autocompleteButton";
             autocompleteButton.Size = new Size(113, 39);
@@ -610,6 +636,14 @@
             autocompleteButton.Text = "Autocomplete";
             autocompleteButton.UseVisualStyleBackColor = true;
             autocompleteButton.Click += autocompleteButton_Click;
+            // 
+            // addressFieldErrorProvider
+            // 
+            addressFieldErrorProvider.ContainerControl = this;
+            // 
+            // apiChoiceErorProvider
+            // 
+            apiChoiceErorProvider.ContainerControl = this;
             // 
             // CheckAddressForm
             // 
@@ -631,6 +665,8 @@
             inputGroupBox.PerformLayout();
             apiGroupBox.ResumeLayout(false);
             apiGroupBox.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)addressFieldErrorProvider).EndInit();
+            ((System.ComponentModel.ISupportInitialize)apiChoiceErorProvider).EndInit();
             ResumeLayout(false);
         }
 
@@ -737,5 +773,9 @@
         private Button button3;
         private TextBox requestAddressTextBox;
         private Label label9;
+        private ErrorProvider addressFieldErrorProvider;
+        private ErrorProvider apiChoiceErorProvider;
+        private TextBox googleResponseStreetTextBox;
+        private Label label45;
     }
 }

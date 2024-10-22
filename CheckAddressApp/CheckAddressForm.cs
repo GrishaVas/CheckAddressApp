@@ -8,13 +8,13 @@ namespace CheckAddressApp
 {
     public partial class CheckAddressForm : Form
     {
-        private GoogleAddressApiService _googleAddressValidationApiService;
+        private GoogleAddressApiService _googleAddressApiService;
         private LoqateAddressApiService _loqateAddressApiService;
         private IConfiguration _conf;
         private Models.Loqate.ValidateAddressResponse _loqateValidateResponse;
         public CheckAddressForm(IConfiguration conf)
         {
-            _googleAddressValidationApiService = new GoogleAddressApiService(conf["Google:ApiKey"],
+            _googleAddressApiService = new GoogleAddressApiService(conf["Google:ApiKey"],
                 conf["Google:ClientId"],
                 conf["Google:ClientSecret"],
                 conf["Google:RefreshToken"]);
@@ -49,14 +49,26 @@ namespace CheckAddressApp
 
         private void fillRequestAddress()
         {
-            var requestAddress = (regionCodeComboBox.Text != "" ? $"{regionCodeComboBox.Text} ," : "") +
-                $"{addressTextBox.Text}" +
-                (localityTextBox.Text != "" ? $", {localityTextBox.Text}" : "") +
-                (sublocalityTextBox.Text != "" ? $", {sublocalityTextBox.Text}" : "") +
-                (administrativeAreaTextBox.Text != "" ? $", {administrativeAreaTextBox.Text}" : "") +
-                (postalCodeTextBox.Text != "" ? $", {postalCodeTextBox.Text}" : "");
+            var requestAddress = (regionCodeComboBox.Text != "" ? $"Region code: {regionCodeComboBox.Text} | " : "") +
+                $"Address: {addressTextBox.Text}" +
+                (localityTextBox.Text != "" ? $" | Locality: {localityTextBox.Text}" : "") +
+                (sublocalityTextBox.Text != "" ? $" | Sublocality: {sublocalityTextBox.Text}" : "") +
+                (administrativeAreaTextBox.Text != "" ? $" | Administrative area: {administrativeAreaTextBox.Text}" : "") +
+                (postalCodeTextBox.Text != "" ? $" | Postal code: {postalCodeTextBox.Text}" : "");
 
             requestAddressTextBox.Text = requestAddress;
+        }
+
+        private string getAutocompliteInput()
+        {
+            var input = (regionCodeComboBox.Text != "" ? $"{regionCodeComboBox.Text} " : "") +
+                (addressTextBox.Text != "" ? $"{addressTextBox.Text} " : "") +
+                (localityTextBox.Text != "" ? $"{localityTextBox.Text} " : "") +
+                (sublocalityTextBox.Text != "" ? $"{sublocalityTextBox.Text} " : "") +
+                (administrativeAreaTextBox.Text != "" ? $"{administrativeAreaTextBox.Text} " : "") +
+                (postalCodeTextBox.Text != "" ? $"{postalCodeTextBox.Text} " : "");
+
+            return input;
         }
         private async Task loqateValidation()
         {
@@ -84,7 +96,6 @@ namespace CheckAddressApp
 
             _loqateValidateResponse = reponse;
 
-
             var addresses = reponse.Matches.Select(m => m.Address ?? "None").ToArray();
 
             if (addresses != null || addresses.Length > 0)
@@ -92,9 +103,16 @@ namespace CheckAddressApp
                 loqateResponseListBox.Items.AddRange(addresses);
             }
         }
+
         private async Task googleValidation()
         {
             clearGoogleResponse();
+
+            if (string.IsNullOrEmpty(addressTextBox.Text))
+            {
+                addressFieldErrorProvider.SetError(addressTextBox, "The Address field required for google maps API.");
+                return;
+            }
 
             var address = new PostalAddress()
             {
@@ -115,14 +133,14 @@ namespace CheckAddressApp
                 SessionToken = "",
             };
 
-            var response = await _googleAddressValidationApiService.ValidateAddress(addressValidationRequest);
+            var response = await _googleAddressApiService.ValidateAddress(addressValidationRequest);
 
             var responseAddress = response.Result.Address;
 
             googleResponseFormattedAddressTextBox.Text = responseAddress.FormattedAddress;
 
-            var generalVerdict = _googleAddressValidationApiService.GetVerdictString(response.Result.Verdict).Select(x => $"    {x}\n");
-            var componetsConfirmation = _googleAddressValidationApiService.GetComponentsComfirmationString(responseAddress.AddressComponents).Select(x => $"    {x}\n");
+            var generalVerdict = _googleAddressApiService.GetVerdictString(response.Result.Verdict).Select(x => $"    {x}\n");
+            var componetsConfirmation = _googleAddressApiService.GetComponentsComfirmationString(responseAddress.AddressComponents).Select(x => $"    {x}\n");
 
             googleResponseOutputTextBox.Text = $"generalVerdict:\n{string.Join("", generalVerdict)}\ncomponentsComfirmation:\n{string.Join("", componetsConfirmation)}";
 
@@ -135,10 +153,73 @@ namespace CheckAddressApp
             googleResponsePostalCodeTextBox.Text = responsePostalAddress.PostalCode;
             googleResponseSortingCodeTextBox.Text = responsePostalAddress.SortingCode;
             googleResponseSublocalityTextBox.Text = responsePostalAddress.Sublocality;
+
+            var street = responseAddress.AddressComponents.FirstOrDefault(c => c.ComponentType == "route")?.ComponentName?.Text;
+            var houseNumber = responseAddress.AddressComponents.FirstOrDefault(c => c.ComponentType == "street_number")?.ComponentName?.Text;
+
+            googleResponseStreetTextBox.Text = $"{street} {houseNumber}";
+        }
+
+        private async Task loqateAutocomplete()
+        {
+            clearLoqateResponse();
+
+            var input = getAutocompliteInput();
+
+            if (input == "")
+            {
+                return;
+            }
+
+            var autocompleteAddressRequest = new Models.Loqate.AutocompleteAddressRequest
+            {
+                Lqtkey = _conf["Loqate:ApiKey"],
+                Query = addressTextBox.Text,
+                Country = regionCodeComboBox.Text,
+                Filters = new Models.Loqate.AutocompleteAddressRequestFilters
+                {
+                    AdministrativeArea = administrativeAreaTextBox.Text,
+                    Locality = localityTextBox.Text,
+                    PostalCode = postalCodeTextBox.Text
+                }
+            };
+            var autocompleteAddressResponses = await _loqateAddressApiService.AutocompleteAddress(autocompleteAddressRequest);
+            var suggestions = autocompleteAddressResponses.Output;
+
+            if (suggestions != null && suggestions.Count() > 0)
+            {
+                loqateResponseListBox.Items.AddRange(suggestions.ToArray());
+            }
+        }
+
+        private async Task googleAutocomplete()
+        {
+            clearGoogleResponse();
+
+            var input = getAutocompliteInput();
+
+            if (input == "")
+            {
+                return;
+            }
+
+            var autocompleteAddressRequest = new AutocompleteAddressRequest(input);
+            var autocompleteAddressResponse = await _googleAddressApiService.AutocompleteAddress(autocompleteAddressRequest);
+            var suggestions = autocompleteAddressResponse.Suggestions?.Select(s => $"\"{s.PlacePrediction.Text.Text}\"\n");
+
+            if (suggestions != null && suggestions.Count() > 0)
+            {
+                googleResponseOutputTextBox.Text = string.Join("", suggestions);
+            }
         }
 
         private async void checkButton_Click(object sender, EventArgs e)
         {
+            if (!googleMapsCheckBox.Checked && !loqateCheckBox.Checked)
+            {
+                apiChoiceErorProvider.SetError(apiGroupBox, "Select at least one api");
+            }
+
             fillRequestAddress();
 
             if (googleMapsCheckBox.Checked)
@@ -169,33 +250,23 @@ namespace CheckAddressApp
             clearGoogleResponse();
         }
 
-        private void addressTextBox_TextChanged(object sender, EventArgs e)
-        {
-            if (!string.IsNullOrEmpty(addressTextBox.Text))
-            {
-                checkButton.Enabled = true;
-                autocompleteButton.Enabled = true;
-            }
-            else
-            {
-                checkButton.Enabled = false;
-                autocompleteButton.Enabled = false;
-            }
-        }
-
         private async void autocompleteButton_Click(object sender, EventArgs e)
         {
             fillRequestAddress();
-            clearGoogleResponse();
-            apiTabControl.SelectTab(0);
 
-            var autocompleteAddressRequest = new AutocompleteAddressRequest(addressTextBox.Text);
-            var autocompleteAddressResponse = await _googleAddressValidationApiService.AutocompleteAddress(autocompleteAddressRequest);
-            var suggestions = autocompleteAddressResponse.Suggestions?.Select(s => $"\"{s.PlacePrediction.Text.Text}\"\n");
-
-            if (suggestions != null && suggestions.Count() > 0)
+            if (!googleMapsCheckBox.Checked && !loqateCheckBox.Checked)
             {
-                googleResponseOutputTextBox.Text = string.Join("", suggestions);
+                apiChoiceErorProvider.SetError(apiGroupBox, "Select at least one api");
+            }
+
+            if (googleMapsCheckBox.Checked)
+            {
+                await googleAutocomplete();
+            }
+
+            if (loqateCheckBox.Checked)
+            {
+                await loqateAutocomplete();
             }
         }
 
@@ -223,6 +294,24 @@ namespace CheckAddressApp
         private void button3_Click(object sender, EventArgs e)
         {
             clearLoqateResponse();
+        }
+
+        private void addressTextBox_TextChanged(object sender, EventArgs e)
+        {
+            if (addressFieldErrorProvider.HasErrors)
+            {
+                addressFieldErrorProvider.Clear();
+            }
+        }
+
+        private void googleMapsCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            apiChoiceErorProvider.Clear();
+        }
+
+        private void loqateCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            apiChoiceErorProvider.Clear();
         }
     }
 }
