@@ -12,8 +12,13 @@ namespace CheckAddressApp
         private LoqateAddressApiService _loqateAddressApiService;
         private IConfiguration _conf;
         private Models.Loqate.ValidateAddressResponse _loqateValidateResponse;
+        private Models.Smarty.ValidateAddressResponse _smartyValidateResponse;
+        private SmartyAddressApiService _smartyAddressApiService;
         public CheckAddressForm(IConfiguration conf)
         {
+            _smartyAddressApiService = new SmartyAddressApiService(
+                conf["Smarty:AuthId"],
+                conf["Smarty:AuthToken"]);
             _googleAddressApiService = new GoogleAddressApiService(conf["Google:ApiKey"],
                 conf["Google:ClientId"],
                 conf["Google:ClientSecret"],
@@ -42,9 +47,18 @@ namespace CheckAddressApp
 
         private void clearLoqateResponse()
         {
+            _loqateValidateResponse = null;
             loqateResponseDataGridView.Rows.Clear();
             loqateResponseListBox.Items.Clear();
             loqateResponseVerificationLavelTextBox.Text = "";
+        }
+
+        private void clearSmartyResponse()
+        {
+            _smartyValidateResponse = null;
+            smartyResponseAnalisisDataGridView.Rows.Clear();
+            smartyResponseComponetsDataGridView.Rows.Clear();
+            smartyResponseListBox.Items.Clear();
         }
 
         private void fillRequestAddress()
@@ -160,6 +174,66 @@ namespace CheckAddressApp
             googleResponseStreetTextBox.Text = $"{street} {houseNumber}";
         }
 
+        private void smartyValidation()
+        {
+            clearSmartyResponse();
+
+            if (string.IsNullOrEmpty(addressTextBox.Text))
+            {
+                addressFieldErrorProvider.SetError(addressTextBox, "The Address field required for smarty API.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(regionCodeComboBox.Text))
+            {
+                smartyCountryCodeErrorProvider.SetError(regionCodeComboBox, "The Country Code required for smarty API.");
+
+                return;
+            }
+
+            if (regionCodeComboBox.Text == "US")
+            {
+                var lookup = new SmartyStreets.USStreetApi.Lookup(addressTextBox.Text)
+                {
+                    State = administrativeAreaTextBox.Text,
+                    ZipCode = postalCodeTextBox.Text,
+                    Street2 = $"{localityTextBox.Text} {sublocalityTextBox.Text}"
+                };
+
+                _smartyAddressApiService.ValidateUSAddress(lookup);
+
+                var results = lookup.Result.Select(r => $"{r.DeliveryLine1} {r.DeliveryLine2} {r.LastLine}").ToArray();
+
+                smartyResponseListBox.Items.AddRange(results);
+                _smartyValidateResponse = new Models.Smarty.ValidateAddressResponse
+                {
+                    CoutryCode = regionCodeComboBox.Text,
+                    USLookup = lookup
+                };
+            }
+            else
+            {
+                var lookup = new SmartyStreets.InternationalStreetApi.Lookup(addressTextBox.Text, regionCodeComboBox.Text)
+                {
+                    AdministrativeArea = administrativeAreaTextBox.Text,
+                    PostalCode = postalCodeTextBox.Text,
+                    Locality = localityTextBox.Text,
+                    Address4 = sublocalityTextBox.Text
+                };
+
+                _smartyAddressApiService.ValidateInternationalAddress(lookup);
+
+                var results = lookup.Result.Select(r => $"{r.Address1} {r.Address2} {r.Address3}").ToArray();
+
+                smartyResponseListBox.Items.AddRange(results);
+                _smartyValidateResponse = new Models.Smarty.ValidateAddressResponse
+                {
+                    CoutryCode = regionCodeComboBox.Text,
+                    InternationalLookup = lookup
+                };
+            }
+        }
+
         private async Task loqateAutocomplete()
         {
             clearLoqateResponse();
@@ -213,9 +287,44 @@ namespace CheckAddressApp
             }
         }
 
+        private void smartyAutocomplete()
+        {
+            clearSmartyResponse();
+
+            if (string.IsNullOrEmpty(addressTextBox.Text))
+            {
+                addressFieldErrorProvider.SetError(addressTextBox, "The Address field required for smarty API.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(regionCodeComboBox.Text))
+            {
+                smartyCountryCodeErrorProvider.SetError(regionCodeComboBox, "The Country Code required for smarty API.");
+
+                return;
+            }
+
+            var address = addressTextBox.Text;
+            var countryCode = regionCodeComboBox.Text;
+            var suggestions = _smartyAddressApiService.AutocompleteAddress(address, countryCode);
+
+            smartyResponseListBox.Items.AddRange(suggestions.ToArray());
+        }
+
+        private IEnumerable<(string Field, string Value)> getMatchsRows(object match)
+        {
+            var rows = match.GetType().GetProperties().Where(p => p.PropertyType.IsValueType || p.PropertyType == typeof(string)).Select(p =>
+                    (
+                        Field: p.Name,
+                        Value: p.GetValue(match)?.ToString()
+                    )).Where(r => !string.IsNullOrEmpty(r.Value));
+
+            return rows;
+        }
+
         private async void checkButton_Click(object sender, EventArgs e)
         {
-            if (!googleMapsCheckBox.Checked && !loqateCheckBox.Checked)
+            if (!googleMapsCheckBox.Checked && !loqateCheckBox.Checked && !smartyCheckBox.Checked)
             {
                 apiChoiceErorProvider.SetError(apiGroupBox, "Select at least one api");
             }
@@ -231,6 +340,11 @@ namespace CheckAddressApp
             {
                 await loqateValidation();
             }
+
+            if (smartyCheckBox.Checked)
+            {
+                smartyValidation();
+            }
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -243,6 +357,9 @@ namespace CheckAddressApp
             sublocalityTextBox.Text = "";
             requestAddressTextBox.Text = "";
             regionCodeComboBox.SelectedItem = null;
+            googleMapsCheckBox.Checked = false;
+            loqateCheckBox.Checked = false;
+            smartyCheckBox.Checked = false;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -254,7 +371,7 @@ namespace CheckAddressApp
         {
             fillRequestAddress();
 
-            if (!googleMapsCheckBox.Checked && !loqateCheckBox.Checked)
+            if (!googleMapsCheckBox.Checked && !loqateCheckBox.Checked && !smartyCheckBox.Checked)
             {
                 apiChoiceErorProvider.SetError(apiGroupBox, "Select at least one api");
             }
@@ -268,6 +385,11 @@ namespace CheckAddressApp
             {
                 await loqateAutocomplete();
             }
+
+            if (smartyCheckBox.Checked)
+            {
+                smartyAutocomplete();
+            }
         }
 
         private void loqateResponseListBox_SelectedIndexChanged(object sender, EventArgs e)
@@ -276,7 +398,7 @@ namespace CheckAddressApp
             {
                 var item = loqateResponseListBox.SelectedItem;
                 var match = _loqateValidateResponse.Matches.FirstOrDefault(m => m.Address == item);
-                var rows = _loqateValidateResponse.Matches.FirstOrDefault(m => m.Address == item).GetType().GetProperties().Select(p => new
+                var rows = match.GetType().GetProperties().Select(p => new
                 {
                     Field = p.Name,
                     Value = p.GetValue(match)
@@ -312,6 +434,60 @@ namespace CheckAddressApp
         private void loqateCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             apiChoiceErorProvider.Clear();
+        }
+
+        private void smartyResponseListBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_smartyValidateResponse != null && loqateResponseListBox.SelectedItem != "None")
+            {
+                var item = smartyResponseListBox.SelectedItem;
+                IEnumerable<(string Field, string Value)> componetsRows;
+                IEnumerable<(string Field, string Value)> analysisRows;
+
+                if (_smartyValidateResponse.CoutryCode == "US")
+                {
+                    var match = _smartyValidateResponse.USLookup.Result
+                        .FirstOrDefault(c => $"{c.DeliveryLine1} {c.DeliveryLine2} {c.LastLine}" == item.ToString());
+                    var componetsMatch = match.Components;
+                    var analysisMatch = match.Analysis;
+
+                    analysisRows = getMatchsRows(analysisMatch);
+                    componetsRows = getMatchsRows(componetsMatch);
+                }
+                else
+                {
+                    var match = _smartyValidateResponse.InternationalLookup.Result
+                        .FirstOrDefault(c => $"{c.Address1} {c.Address2} {c.Address3}" == item.ToString());
+                    var componetsMatch = match.Components;
+                    var analysisMatch = match.Analysis;
+
+                    analysisRows = getMatchsRows(analysisMatch);
+                    componetsRows = getMatchsRows(componetsMatch);
+                }
+
+                smartyResponseComponetsDataGridView.Rows.Clear();
+                smartyResponseAnalisisDataGridView.Rows.Clear();
+
+                foreach (var row in componetsRows)
+                {
+                    smartyResponseComponetsDataGridView.Rows.Add(row.Field, row.Value);
+                }
+
+                foreach (var row in analysisRows)
+                {
+                    smartyResponseAnalisisDataGridView.Rows.Add(row.Field, row.Value);
+                }
+            }
+        }
+
+        private void regionCodeComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            smartyCountryCodeErrorProvider.Clear();
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            clearSmartyResponse();
         }
     }
 }

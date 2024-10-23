@@ -22,6 +22,7 @@ namespace CheckAddressApp.Services
         {
             var jsonContent = JsonContent.Create(request);
             var response = await _vaidationAddressHttpClient.PostAsync("Cleansing/International/Batch/v1.00/json4.ws", jsonContent);
+            var str = await response.Content.ReadAsStringAsync();
             var validateAddressResponse = await response.Content.ReadFromJsonAsync<List<ValidateAddressResponse>>();
 
             return validateAddressResponse;
