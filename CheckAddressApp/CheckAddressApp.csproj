@@ -15,6 +15,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Controls\Controls.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="application_default_credentials.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

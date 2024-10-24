@@ -2,9 +2,9 @@
 {
     public class AutocompleteAddressRequest
     {
-        public string Lqtkey { get; set; }
-        public string Query { get; set; }
-        public string Country { get; set; }
-        public AutocompleteAddressRequestFilters Filters { get; set; }
+        public string Key { get; set; }
+        public string Text { get; set; }
+        public string Origin { get; set; }
+        //public AutocompleteAddressRequestFilters Filters { get; set; }
     }
 }

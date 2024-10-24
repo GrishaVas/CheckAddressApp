@@ -5,23 +5,19 @@ namespace CheckAddressApp.Services
 {
     public class LoqateAddressApiService : IDisposable
     {
-        private const string _baseVaidationAddress = "https://api.addressy.com/";
-        private const string _baseAutocompleteAddress = "https://api.everythinglocation.com/";
-        private HttpClient _autocompleteAddressHttpClient;
-        private HttpClient _vaidationAddressHttpClient;
+        private const string _baseAddress = "https://api.addressy.com/";
+        private HttpClient _httpClient;
 
         public LoqateAddressApiService()
         {
-            _vaidationAddressHttpClient = new HttpClient();
-            _autocompleteAddressHttpClient = new HttpClient();
-            _vaidationAddressHttpClient.BaseAddress = new Uri(_baseVaidationAddress);
-            _autocompleteAddressHttpClient.BaseAddress = new Uri(_baseAutocompleteAddress);
+            _httpClient = new HttpClient();
+            _httpClient.BaseAddress = new Uri(_baseAddress);
         }
 
         public async Task<List<ValidateAddressResponse>> ValidateAddress(ValidateAddressRequest request)
         {
             var jsonContent = JsonContent.Create(request);
-            var response = await _vaidationAddressHttpClient.PostAsync("Cleansing/International/Batch/v1.00/json4.ws", jsonContent);
+            var response = await _httpClient.PostAsync("Cleansing/International/Batch/v1.00/json4.ws", jsonContent);
             var str = await response.Content.ReadAsStringAsync();
             var validateAddressResponse = await response.Content.ReadFromJsonAsync<List<ValidateAddressResponse>>();
 
@@ -31,7 +27,9 @@ namespace CheckAddressApp.Services
         public async Task<AutocompleteAddressResponse> AutocompleteAddress(AutocompleteAddressRequest request)
         {
             var jsonContent = JsonContent.Create(request);
-            var response = await _autocompleteAddressHttpClient.PostAsync("address/complete", jsonContent);
+            var url = getAutocompleteUrl("Capture/Interactive/Find/v1.1/json3.ws", request);
+            var response = await _httpClient.PostAsync(url, jsonContent);
+            var str = await response.Content.ReadAsStringAsync();
             var validateAddressResponses = await response.Content.ReadFromJsonAsync<AutocompleteAddressResponse>();
 
             return validateAddressResponses;
@@ -58,15 +56,22 @@ namespace CheckAddressApp.Services
 
         public void Dispose()
         {
-            _vaidationAddressHttpClient.Dispose();
-            _autocompleteAddressHttpClient.Dispose();
+            _httpClient.Dispose();
 
             GC.SuppressFinalize(this);
         }
         ~LoqateAddressApiService()
         {
-            _vaidationAddressHttpClient.Dispose();
-            _autocompleteAddressHttpClient.Dispose();
+            _httpClient.Dispose();
+        }
+
+        private string getAutocompleteUrl(string url, AutocompleteAddressRequest request)
+        {
+            url += $"?Key={System.Web.HttpUtility.UrlEncode(request.Key)}";
+            url += $"&Text={System.Web.HttpUtility.UrlEncode(request.Text)}";
+            url += $"&Origin={System.Web.HttpUtility.UrlEncode(request.Origin)}";
+
+            return url;
         }
     }
 }

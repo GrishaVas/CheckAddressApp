@@ -2,8 +2,6 @@
 {
     public class AutocompleteAddressResponse
     {
-        public string Status { get; set; }
-        public List<string> Output { get; set; }
-        public List<AutocompleteAddressResponseMetadata> Metadata { get; set; }
+        public List<AutocompleteAddressResponseItem> Items { get; set; }
     }
 }

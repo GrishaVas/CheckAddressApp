@@ -29,14 +29,14 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
-            addressTextBox = new TextBox();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            streetAndHouseNumberTextBox = new TextBox();
             label1 = new Label();
             checkButton = new Button();
             label2 = new Label();
             googleResponseOutputTextBox = new RichTextBox();
-            regionCodeComboBox = new ComboBox();
-            localityTextBox = new TextBox();
+            countryCodeComboBox = new ComboBox();
+            cityTextBox = new TextBox();
             label3 = new Label();
             googleResponseFormattedAddressTextBox = new TextBox();
             label4 = new Label();
@@ -44,9 +44,7 @@
             postalCodeTextBox = new TextBox();
             label7 = new Label();
             label8 = new Label();
-            sublocalityTextBox = new TextBox();
-            label10 = new Label();
-            administrativeAreaTextBox = new TextBox();
+            districtTextBox = new TextBox();
             label5 = new Label();
             label12 = new Label();
             googleResponseAdministrativeAreaTextBox = new TextBox();
@@ -91,15 +89,23 @@
             smartyResponseListBox = new ListBox();
             groupBox1 = new GroupBox();
             inputGroupBox = new GroupBox();
+            inputsChoiceTabControl = new TabControl();
+            tabPage2 = new TabPage();
+            tabPage3 = new TabPage();
+            freeInputTextBox = new TextBox();
+            label10 = new Label();
+            autocompleteAutosuggestSplitButton = new Controls.SplitButton();
+            contextMenuStrip1 = new ContextMenuStrip(components);
+            toolStripMenuItem1 = new ToolStripMenuItem();
+            toolStripMenuItem2 = new ToolStripMenuItem();
             label9 = new Label();
             requestAddressTextBox = new TextBox();
             apiGroupBox = new GroupBox();
             smartyCheckBox = new CheckBox();
             loqateCheckBox = new CheckBox();
             googleMapsCheckBox = new CheckBox();
-            autocompleteButton = new Button();
-            addressFieldErrorProvider = new ErrorProvider(components);
-            apiChoiceErorProvider = new ErrorProvider(components);
+            inputErrorProvider = new ErrorProvider(components);
+            apiChoiceErrorProvider = new ErrorProvider(components);
             smartyCountryCodeErrorProvider = new ErrorProvider(components);
             apiTabControl.SuspendLayout();
             googleMapsTabPage.SuspendLayout();
@@ -110,32 +116,36 @@
             ((System.ComponentModel.ISupportInitialize)smartyResponseAnalisisDataGridView).BeginInit();
             groupBox1.SuspendLayout();
             inputGroupBox.SuspendLayout();
+            inputsChoiceTabControl.SuspendLayout();
+            tabPage2.SuspendLayout();
+            tabPage3.SuspendLayout();
+            contextMenuStrip1.SuspendLayout();
             apiGroupBox.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)addressFieldErrorProvider).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)apiChoiceErorProvider).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)inputErrorProvider).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)apiChoiceErrorProvider).BeginInit();
             ((System.ComponentModel.ISupportInitialize)smartyCountryCodeErrorProvider).BeginInit();
             SuspendLayout();
             // 
-            // addressTextBox
+            // streetAndHouseNumberTextBox
             // 
-            addressTextBox.Location = new Point(16, 50);
-            addressTextBox.Name = "addressTextBox";
-            addressTextBox.Size = new Size(344, 27);
-            addressTextBox.TabIndex = 0;
-            addressTextBox.TextChanged += addressTextBox_TextChanged;
+            streetAndHouseNumberTextBox.Location = new Point(6, 40);
+            streetAndHouseNumberTextBox.Name = "streetAndHouseNumberTextBox";
+            streetAndHouseNumberTextBox.Size = new Size(238, 27);
+            streetAndHouseNumberTextBox.TabIndex = 0;
+            streetAndHouseNumberTextBox.TextChanged += addressTextBox_TextChanged;
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(16, 27);
+            label1.Location = new Point(6, 17);
             label1.Name = "label1";
-            label1.Size = new Size(62, 20);
+            label1.Size = new Size(178, 20);
             label1.TabIndex = 1;
-            label1.Text = "Address";
+            label1.Text = "Street and House number";
             // 
             // checkButton
             // 
-            checkButton.Location = new Point(532, 160);
+            checkButton.Location = new Point(896, 156);
             checkButton.Name = "checkButton";
             checkButton.Size = new Size(95, 39);
             checkButton.TabIndex = 2;
@@ -161,32 +171,33 @@
             googleResponseOutputTextBox.TabIndex = 5;
             googleResponseOutputTextBox.Text = "";
             // 
-            // regionCodeComboBox
+            // countryCodeComboBox
             // 
-            regionCodeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-            regionCodeComboBox.FormattingEnabled = true;
-            regionCodeComboBox.Items.AddRange(new object[] { "US", "DE" });
-            regionCodeComboBox.Location = new Point(532, 49);
-            regionCodeComboBox.Name = "regionCodeComboBox";
-            regionCodeComboBox.Size = new Size(95, 28);
-            regionCodeComboBox.TabIndex = 6;
-            regionCodeComboBox.SelectedIndexChanged += regionCodeComboBox_SelectedIndexChanged;
+            countryCodeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            countryCodeComboBox.FormattingEnabled = true;
+            countryCodeComboBox.Items.AddRange(new object[] { "US", "DE" });
+            countryCodeComboBox.Location = new Point(399, 95);
+            countryCodeComboBox.Name = "countryCodeComboBox";
+            countryCodeComboBox.Size = new Size(95, 28);
+            countryCodeComboBox.TabIndex = 6;
+            countryCodeComboBox.SelectedIndexChanged += regionCodeComboBox_SelectedIndexChanged;
             // 
-            // localityTextBox
+            // cityTextBox
             // 
-            localityTextBox.Location = new Point(16, 109);
-            localityTextBox.Name = "localityTextBox";
-            localityTextBox.Size = new Size(169, 27);
-            localityTextBox.TabIndex = 7;
+            cityTextBox.Location = new Point(6, 99);
+            cityTextBox.Name = "cityTextBox";
+            cityTextBox.Size = new Size(169, 27);
+            cityTextBox.TabIndex = 7;
+            cityTextBox.TextChanged += cityTextBox_TextChanged;
             // 
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(16, 85);
+            label3.Location = new Point(6, 75);
             label3.Name = "label3";
-            label3.Size = new Size(60, 20);
+            label3.Size = new Size(34, 20);
             label3.TabIndex = 8;
-            label3.Text = "Locality";
+            label3.Text = "City";
             // 
             // googleResponseFormattedAddressTextBox
             // 
@@ -208,7 +219,7 @@
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new Point(413, 27);
+            label6.Location = new Point(250, 17);
             label6.Name = "label6";
             label6.Size = new Size(87, 20);
             label6.TabIndex = 14;
@@ -216,15 +227,16 @@
             // 
             // postalCodeTextBox
             // 
-            postalCodeTextBox.Location = new Point(413, 50);
+            postalCodeTextBox.Location = new Point(250, 40);
             postalCodeTextBox.Name = "postalCodeTextBox";
             postalCodeTextBox.Size = new Size(113, 27);
             postalCodeTextBox.TabIndex = 13;
+            postalCodeTextBox.TextChanged += postalCodeTextBox_TextChanged;
             // 
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(532, 26);
+            label7.Location = new Point(399, 72);
             label7.Name = "label7";
             label7.Size = new Size(99, 20);
             label7.TabIndex = 15;
@@ -233,34 +245,19 @@
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(191, 85);
+            label8.Location = new Point(181, 75);
             label8.Name = "label8";
-            label8.Size = new Size(82, 20);
+            label8.Size = new Size(56, 20);
             label8.TabIndex = 17;
-            label8.Text = "Sublocality";
+            label8.Text = "District";
             // 
-            // sublocalityTextBox
+            // districtTextBox
             // 
-            sublocalityTextBox.Location = new Point(191, 109);
-            sublocalityTextBox.Name = "sublocalityTextBox";
-            sublocalityTextBox.Size = new Size(169, 27);
-            sublocalityTextBox.TabIndex = 16;
-            // 
-            // label10
-            // 
-            label10.AutoSize = true;
-            label10.Location = new Point(413, 85);
-            label10.Name = "label10";
-            label10.Size = new Size(140, 20);
-            label10.TabIndex = 21;
-            label10.Text = "Administrative Area";
-            // 
-            // administrativeAreaTextBox
-            // 
-            administrativeAreaTextBox.Location = new Point(413, 109);
-            administrativeAreaTextBox.Name = "administrativeAreaTextBox";
-            administrativeAreaTextBox.Size = new Size(214, 27);
-            administrativeAreaTextBox.TabIndex = 20;
+            districtTextBox.Location = new Point(181, 99);
+            districtTextBox.Name = "districtTextBox";
+            districtTextBox.Size = new Size(182, 27);
+            districtTextBox.TabIndex = 16;
+            districtTextBox.TextChanged += districtTextBox_TextChanged;
             // 
             // label5
             // 
@@ -393,7 +390,7 @@
             // 
             // button2
             // 
-            button2.Location = new Point(633, 160);
+            button2.Location = new Point(997, 156);
             button2.Name = "button2";
             button2.Size = new Size(95, 39);
             button2.TabIndex = 42;
@@ -636,8 +633,8 @@
             // 
             // dataGridViewTextBoxColumn3
             // 
-            dataGridViewCellStyle1.Font = new Font("Microsoft Sans Serif", 8F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle2.Font = new Font("Microsoft Sans Serif", 8F, FontStyle.Regular, GraphicsUnit.Point, 204);
+            dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle2;
             dataGridViewTextBoxColumn3.HeaderText = "Field";
             dataGridViewTextBoxColumn3.MinimumWidth = 6;
             dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
@@ -706,30 +703,109 @@
             // 
             // inputGroupBox
             // 
+            inputGroupBox.Controls.Add(inputsChoiceTabControl);
+            inputGroupBox.Controls.Add(autocompleteAutosuggestSplitButton);
             inputGroupBox.Controls.Add(label9);
             inputGroupBox.Controls.Add(requestAddressTextBox);
             inputGroupBox.Controls.Add(apiGroupBox);
-            inputGroupBox.Controls.Add(autocompleteButton);
-            inputGroupBox.Controls.Add(addressTextBox);
-            inputGroupBox.Controls.Add(label1);
             inputGroupBox.Controls.Add(button2);
             inputGroupBox.Controls.Add(checkButton);
-            inputGroupBox.Controls.Add(regionCodeComboBox);
-            inputGroupBox.Controls.Add(localityTextBox);
-            inputGroupBox.Controls.Add(label10);
-            inputGroupBox.Controls.Add(label3);
-            inputGroupBox.Controls.Add(administrativeAreaTextBox);
-            inputGroupBox.Controls.Add(postalCodeTextBox);
-            inputGroupBox.Controls.Add(label6);
+            inputGroupBox.Controls.Add(countryCodeComboBox);
             inputGroupBox.Controls.Add(label7);
-            inputGroupBox.Controls.Add(label8);
-            inputGroupBox.Controls.Add(sublocalityTextBox);
             inputGroupBox.Location = new Point(12, 12);
             inputGroupBox.Name = "inputGroupBox";
             inputGroupBox.Size = new Size(1105, 294);
             inputGroupBox.TabIndex = 45;
             inputGroupBox.TabStop = false;
             inputGroupBox.Text = "Input";
+            // 
+            // inputsChoiceTabControl
+            // 
+            inputsChoiceTabControl.Controls.Add(tabPage2);
+            inputsChoiceTabControl.Controls.Add(tabPage3);
+            inputsChoiceTabControl.Location = new Point(16, 26);
+            inputsChoiceTabControl.Name = "inputsChoiceTabControl";
+            inputsChoiceTabControl.SelectedIndex = 0;
+            inputsChoiceTabControl.Size = new Size(377, 169);
+            inputsChoiceTabControl.TabIndex = 48;
+            inputsChoiceTabControl.SelectedIndexChanged += inputsChoice_SelectedIndexChanged;
+            // 
+            // tabPage2
+            // 
+            tabPage2.BackColor = Color.WhiteSmoke;
+            tabPage2.Controls.Add(streetAndHouseNumberTextBox);
+            tabPage2.Controls.Add(districtTextBox);
+            tabPage2.Controls.Add(label8);
+            tabPage2.Controls.Add(label6);
+            tabPage2.Controls.Add(postalCodeTextBox);
+            tabPage2.Controls.Add(label3);
+            tabPage2.Controls.Add(label1);
+            tabPage2.Controls.Add(cityTextBox);
+            tabPage2.Location = new Point(4, 29);
+            tabPage2.Name = "tabPage2";
+            tabPage2.Padding = new Padding(3);
+            tabPage2.Size = new Size(369, 136);
+            tabPage2.TabIndex = 0;
+            tabPage2.Text = "Structured Input";
+            // 
+            // tabPage3
+            // 
+            tabPage3.BackColor = Color.WhiteSmoke;
+            tabPage3.Controls.Add(freeInputTextBox);
+            tabPage3.Controls.Add(label10);
+            tabPage3.Location = new Point(4, 29);
+            tabPage3.Name = "tabPage3";
+            tabPage3.Padding = new Padding(3);
+            tabPage3.Size = new Size(369, 136);
+            tabPage3.TabIndex = 1;
+            tabPage3.Text = "Free Input";
+            // 
+            // freeInputTextBox
+            // 
+            freeInputTextBox.Location = new Point(6, 40);
+            freeInputTextBox.Name = "freeInputTextBox";
+            freeInputTextBox.Size = new Size(357, 27);
+            freeInputTextBox.TabIndex = 2;
+            // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Location = new Point(6, 17);
+            label10.Name = "label10";
+            label10.Size = new Size(62, 20);
+            label10.TabIndex = 3;
+            label10.Text = "Address";
+            // 
+            // autocompleteAutosuggestSplitButton
+            // 
+            autocompleteAutosuggestSplitButton.ContextMenuStrip = contextMenuStrip1;
+            autocompleteAutosuggestSplitButton.Location = new Point(764, 156);
+            autocompleteAutosuggestSplitButton.Name = "autocompleteAutosuggestSplitButton";
+            autocompleteAutosuggestSplitButton.Size = new Size(126, 39);
+            autocompleteAutosuggestSplitButton.TabIndex = 47;
+            autocompleteAutosuggestSplitButton.Text = "Autocomplete";
+            autocompleteAutosuggestSplitButton.UseVisualStyleBackColor = true;
+            autocompleteAutosuggestSplitButton.Click += autocompleteAutosuggestSplitButton_Click;
+            // 
+            // contextMenuStrip1
+            // 
+            contextMenuStrip1.ImageScalingSize = new Size(20, 20);
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { toolStripMenuItem1, toolStripMenuItem2 });
+            contextMenuStrip1.Name = "contextMenuStrip1";
+            contextMenuStrip1.Size = new Size(174, 52);
+            contextMenuStrip1.ItemClicked += contextMenuStrip1_ItemClicked;
+            // 
+            // toolStripMenuItem1
+            // 
+            toolStripMenuItem1.Name = "toolStripMenuItem1";
+            toolStripMenuItem1.Size = new Size(173, 24);
+            toolStripMenuItem1.Text = "Autosuggest";
+            // 
+            // toolStripMenuItem2
+            // 
+            toolStripMenuItem2.Name = "toolStripMenuItem2";
+            toolStripMenuItem2.Size = new Size(173, 24);
+            toolStripMenuItem2.Text = "Autocomplete";
             // 
             // label9
             // 
@@ -753,7 +829,7 @@
             apiGroupBox.Controls.Add(smartyCheckBox);
             apiGroupBox.Controls.Add(loqateCheckBox);
             apiGroupBox.Controls.Add(googleMapsCheckBox);
-            apiGroupBox.Location = new Point(16, 142);
+            apiGroupBox.Location = new Point(748, 55);
             apiGroupBox.Name = "apiGroupBox";
             apiGroupBox.Size = new Size(344, 68);
             apiGroupBox.TabIndex = 44;
@@ -769,6 +845,7 @@
             smartyCheckBox.TabIndex = 2;
             smartyCheckBox.Text = "Smarty";
             smartyCheckBox.UseVisualStyleBackColor = true;
+            smartyCheckBox.CheckedChanged += smartyCheckBox_CheckedChanged;
             // 
             // loqateCheckBox
             // 
@@ -792,23 +869,13 @@
             googleMapsCheckBox.UseVisualStyleBackColor = true;
             googleMapsCheckBox.CheckedChanged += googleMapsCheckBox_CheckedChanged;
             // 
-            // autocompleteButton
+            // inputErrorProvider
             // 
-            autocompleteButton.Location = new Point(413, 160);
-            autocompleteButton.Name = "autocompleteButton";
-            autocompleteButton.Size = new Size(113, 39);
-            autocompleteButton.TabIndex = 43;
-            autocompleteButton.Text = "Autocomplete";
-            autocompleteButton.UseVisualStyleBackColor = true;
-            autocompleteButton.Click += autocompleteButton_Click;
+            inputErrorProvider.ContainerControl = this;
             // 
-            // addressFieldErrorProvider
+            // apiChoiceErrorProvider
             // 
-            addressFieldErrorProvider.ContainerControl = this;
-            // 
-            // apiChoiceErorProvider
-            // 
-            apiChoiceErorProvider.ContainerControl = this;
+            apiChoiceErrorProvider.ContainerControl = this;
             // 
             // smartyCountryCodeErrorProvider
             // 
@@ -836,23 +903,29 @@
             groupBox1.ResumeLayout(false);
             inputGroupBox.ResumeLayout(false);
             inputGroupBox.PerformLayout();
+            inputsChoiceTabControl.ResumeLayout(false);
+            tabPage2.ResumeLayout(false);
+            tabPage2.PerformLayout();
+            tabPage3.ResumeLayout(false);
+            tabPage3.PerformLayout();
+            contextMenuStrip1.ResumeLayout(false);
             apiGroupBox.ResumeLayout(false);
             apiGroupBox.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)addressFieldErrorProvider).EndInit();
-            ((System.ComponentModel.ISupportInitialize)apiChoiceErorProvider).EndInit();
+            ((System.ComponentModel.ISupportInitialize)inputErrorProvider).EndInit();
+            ((System.ComponentModel.ISupportInitialize)apiChoiceErrorProvider).EndInit();
             ((System.ComponentModel.ISupportInitialize)smartyCountryCodeErrorProvider).EndInit();
             ResumeLayout(false);
         }
 
         #endregion
 
-        private TextBox addressTextBox;
+        private TextBox streetAndHouseNumberTextBox;
         private Label label1;
         private Button checkButton;
         private Label label2;
         private RichTextBox googleResponseOutputTextBox;
-        private ComboBox regionCodeComboBox;
-        private TextBox localityTextBox;
+        private ComboBox countryCodeComboBox;
+        private TextBox cityTextBox;
         private Label label3;
         private TextBox googleResponseFormattedAddressTextBox;
         private Label label4;
@@ -860,9 +933,7 @@
         private TextBox postalCodeTextBox;
         private Label label7;
         private Label label8;
-        private TextBox sublocalityTextBox;
-        private Label label10;
-        private TextBox administrativeAreaTextBox;
+        private TextBox districtTextBox;
         private Label label5;
         private Label label12;
         private TextBox googleResponseAdministrativeAreaTextBox;
@@ -884,7 +955,6 @@
         private TabPage loqateTabPage;
         private GroupBox groupBox1;
         private GroupBox inputGroupBox;
-        private Button autocompleteButton;
         private GroupBox apiGroupBox;
         private CheckBox loqateCheckBox;
         private CheckBox googleMapsCheckBox;
@@ -947,8 +1017,8 @@
         private Button button3;
         private TextBox requestAddressTextBox;
         private Label label9;
-        private ErrorProvider addressFieldErrorProvider;
-        private ErrorProvider apiChoiceErorProvider;
+        private ErrorProvider inputErrorProvider;
+        private ErrorProvider apiChoiceErrorProvider;
         private TextBox googleResponseStreetTextBox;
         private Label label45;
         private TabPage tabPage1;
@@ -965,5 +1035,14 @@
         private Label label46;
         private Label label11;
         private Button button4;
+        private Controls.SplitButton autocompleteAutosuggestSplitButton;
+        private ContextMenuStrip contextMenuStrip1;
+        private ToolStripMenuItem toolStripMenuItem1;
+        private ToolStripMenuItem toolStripMenuItem2;
+        private TabControl inputsChoiceTabControl;
+        private TabPage tabPage2;
+        private TabPage tabPage3;
+        private TextBox freeInputTextBox;
+        private Label label10;
     }
 }
