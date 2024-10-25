@@ -208,21 +208,6 @@ namespace Controls
         /// <param name="e">MouseEventArgs that contains the event data</param>
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            if (!_showSplit)
-            {
-                base.OnMouseDown(e);
-                return;
-            }
-
-            if (e.Button == MouseButtons.Right)
-            {
-                _skipNextOpen = false;
-            }
-            else if ((_dropDownRectangle.Contains(e.Location) || _dropDownButton))
-            {
-                ShowContextMenuStrip();
-            }
-
             MState = PushButtonState.Pressed;
         }
 
@@ -286,6 +271,21 @@ namespace Controls
                 {
                     OnClick(new EventArgs());
                 }
+            }
+
+            if (!_showSplit)
+            {
+                base.OnMouseDown(mevent);
+                return;
+            }
+
+            if (mevent.Button == MouseButtons.Right)
+            {
+                _skipNextOpen = false;
+            }
+            else if ((_dropDownRectangle.Contains(mevent.Location) && _dropDownButton))
+            {
+                ShowContextMenuStrip();
             }
         }
 

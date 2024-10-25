@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             streetAndHouseNumberTextBox = new TextBox();
             label1 = new Label();
             checkButton = new Button();
@@ -75,7 +75,7 @@
             valueColumn = new DataGridViewTextBoxColumn();
             label43 = new Label();
             loqateResponseListBox = new ListBox();
-            tabPage1 = new TabPage();
+            smartyTabPage = new TabPage();
             button4 = new Button();
             label47 = new Label();
             label46 = new Label();
@@ -87,6 +87,13 @@
             dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
             dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
             smartyResponseListBox = new ListBox();
+            hereTabPage = new TabPage();
+            label48 = new Label();
+            hereResponseListBox = new ListBox();
+            label20 = new Label();
+            hereResponseDataGridView = new DataGridView();
+            dataGridViewTextBoxColumn5 = new DataGridViewTextBoxColumn();
+            dataGridViewTextBoxColumn6 = new DataGridViewTextBoxColumn();
             groupBox1 = new GroupBox();
             inputGroupBox = new GroupBox();
             inputsChoiceTabControl = new TabControl();
@@ -101,6 +108,7 @@
             label9 = new Label();
             requestAddressTextBox = new TextBox();
             apiGroupBox = new GroupBox();
+            hereCheckBox = new CheckBox();
             smartyCheckBox = new CheckBox();
             loqateCheckBox = new CheckBox();
             googleMapsCheckBox = new CheckBox();
@@ -111,9 +119,11 @@
             googleMapsTabPage.SuspendLayout();
             loqateTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)loqateResponseDataGridView).BeginInit();
-            tabPage1.SuspendLayout();
+            smartyTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)smartyResponseComponetsDataGridView).BeginInit();
             ((System.ComponentModel.ISupportInitialize)smartyResponseAnalisisDataGridView).BeginInit();
+            hereTabPage.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)hereResponseDataGridView).BeginInit();
             groupBox1.SuspendLayout();
             inputGroupBox.SuspendLayout();
             inputsChoiceTabControl.SuspendLayout();
@@ -402,7 +412,8 @@
             // 
             apiTabControl.Controls.Add(googleMapsTabPage);
             apiTabControl.Controls.Add(loqateTabPage);
-            apiTabControl.Controls.Add(tabPage1);
+            apiTabControl.Controls.Add(smartyTabPage);
+            apiTabControl.Controls.Add(hereTabPage);
             apiTabControl.Location = new Point(16, 26);
             apiTabControl.Name = "apiTabControl";
             apiTabControl.SelectedIndex = 0;
@@ -561,22 +572,22 @@
             loqateResponseListBox.TabIndex = 25;
             loqateResponseListBox.SelectedIndexChanged += loqateResponseListBox_SelectedIndexChanged;
             // 
-            // tabPage1
+            // smartyTabPage
             // 
-            tabPage1.Controls.Add(button4);
-            tabPage1.Controls.Add(label47);
-            tabPage1.Controls.Add(label46);
-            tabPage1.Controls.Add(label11);
-            tabPage1.Controls.Add(smartyResponseComponetsDataGridView);
-            tabPage1.Controls.Add(smartyResponseAnalisisDataGridView);
-            tabPage1.Controls.Add(smartyResponseListBox);
-            tabPage1.Location = new Point(4, 29);
-            tabPage1.Name = "tabPage1";
-            tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(1068, 445);
-            tabPage1.TabIndex = 2;
-            tabPage1.Text = "Smarty";
-            tabPage1.UseVisualStyleBackColor = true;
+            smartyTabPage.Controls.Add(button4);
+            smartyTabPage.Controls.Add(label47);
+            smartyTabPage.Controls.Add(label46);
+            smartyTabPage.Controls.Add(label11);
+            smartyTabPage.Controls.Add(smartyResponseComponetsDataGridView);
+            smartyTabPage.Controls.Add(smartyResponseAnalisisDataGridView);
+            smartyTabPage.Controls.Add(smartyResponseListBox);
+            smartyTabPage.Location = new Point(4, 29);
+            smartyTabPage.Name = "smartyTabPage";
+            smartyTabPage.Padding = new Padding(3);
+            smartyTabPage.Size = new Size(1068, 445);
+            smartyTabPage.TabIndex = 2;
+            smartyTabPage.Text = "Smarty";
+            smartyTabPage.UseVisualStyleBackColor = true;
             // 
             // button4
             // 
@@ -633,8 +644,8 @@
             // 
             // dataGridViewTextBoxColumn3
             // 
-            dataGridViewCellStyle2.Font = new Font("Microsoft Sans Serif", 8F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle1.Font = new Font("Microsoft Sans Serif", 8F, FontStyle.Regular, GraphicsUnit.Point, 204);
+            dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle1;
             dataGridViewTextBoxColumn3.HeaderText = "Field";
             dataGridViewTextBoxColumn3.MinimumWidth = 6;
             dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
@@ -691,6 +702,79 @@
             smartyResponseListBox.TabIndex = 26;
             smartyResponseListBox.SelectedIndexChanged += smartyResponseListBox_SelectedIndexChanged;
             // 
+            // hereTabPage
+            // 
+            hereTabPage.Controls.Add(label48);
+            hereTabPage.Controls.Add(hereResponseListBox);
+            hereTabPage.Controls.Add(label20);
+            hereTabPage.Controls.Add(hereResponseDataGridView);
+            hereTabPage.Location = new Point(4, 29);
+            hereTabPage.Name = "hereTabPage";
+            hereTabPage.Size = new Size(1068, 445);
+            hereTabPage.TabIndex = 3;
+            hereTabPage.Text = "Here";
+            hereTabPage.UseVisualStyleBackColor = true;
+            // 
+            // label48
+            // 
+            label48.AutoSize = true;
+            label48.Location = new Point(744, 19);
+            label48.Name = "label48";
+            label48.Size = new Size(64, 20);
+            label48.TabIndex = 83;
+            label48.Text = "Matches";
+            // 
+            // hereResponseListBox
+            // 
+            hereResponseListBox.FormattingEnabled = true;
+            hereResponseListBox.HorizontalScrollbar = true;
+            hereResponseListBox.Location = new Point(744, 42);
+            hereResponseListBox.Name = "hereResponseListBox";
+            hereResponseListBox.Size = new Size(316, 144);
+            hereResponseListBox.TabIndex = 82;
+            hereResponseListBox.SelectedIndexChanged += hereResponseListBox_SelectedIndexChanged;
+            // 
+            // label20
+            // 
+            label20.AutoSize = true;
+            label20.Location = new Point(21, 19);
+            label20.Name = "label20";
+            label20.Size = new Size(50, 20);
+            label20.TabIndex = 81;
+            label20.Text = "Match";
+            // 
+            // hereResponseDataGridView
+            // 
+            hereResponseDataGridView.AllowUserToAddRows = false;
+            hereResponseDataGridView.AllowUserToDeleteRows = false;
+            hereResponseDataGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            hereResponseDataGridView.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn5, dataGridViewTextBoxColumn6 });
+            hereResponseDataGridView.Location = new Point(21, 42);
+            hereResponseDataGridView.Name = "hereResponseDataGridView";
+            hereResponseDataGridView.ReadOnly = true;
+            hereResponseDataGridView.RowHeadersVisible = false;
+            hereResponseDataGridView.RowHeadersWidth = 51;
+            hereResponseDataGridView.RowTemplate.Height = 25;
+            hereResponseDataGridView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            hereResponseDataGridView.Size = new Size(499, 403);
+            hereResponseDataGridView.TabIndex = 80;
+            // 
+            // dataGridViewTextBoxColumn5
+            // 
+            dataGridViewTextBoxColumn5.HeaderText = "Field";
+            dataGridViewTextBoxColumn5.MinimumWidth = 6;
+            dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
+            dataGridViewTextBoxColumn5.ReadOnly = true;
+            dataGridViewTextBoxColumn5.Width = 200;
+            // 
+            // dataGridViewTextBoxColumn6
+            // 
+            dataGridViewTextBoxColumn6.HeaderText = "Value";
+            dataGridViewTextBoxColumn6.MinimumWidth = 6;
+            dataGridViewTextBoxColumn6.Name = "dataGridViewTextBoxColumn6";
+            dataGridViewTextBoxColumn6.ReadOnly = true;
+            dataGridViewTextBoxColumn6.Width = 300;
+            // 
             // groupBox1
             // 
             groupBox1.Controls.Add(apiTabControl);
@@ -723,6 +807,7 @@
             // 
             inputsChoiceTabControl.Controls.Add(tabPage2);
             inputsChoiceTabControl.Controls.Add(tabPage3);
+            inputErrorProvider.SetIconAlignment(inputsChoiceTabControl, ErrorIconAlignment.BottomRight);
             inputsChoiceTabControl.Location = new Point(16, 26);
             inputsChoiceTabControl.Name = "inputsChoiceTabControl";
             inputsChoiceTabControl.SelectedIndex = 0;
@@ -741,6 +826,7 @@
             tabPage2.Controls.Add(label3);
             tabPage2.Controls.Add(label1);
             tabPage2.Controls.Add(cityTextBox);
+            inputErrorProvider.SetIconAlignment(tabPage2, ErrorIconAlignment.BottomRight);
             tabPage2.Location = new Point(4, 29);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
@@ -753,6 +839,7 @@
             tabPage3.BackColor = Color.WhiteSmoke;
             tabPage3.Controls.Add(freeInputTextBox);
             tabPage3.Controls.Add(label10);
+            inputErrorProvider.SetIconAlignment(tabPage3, ErrorIconAlignment.BottomRight);
             tabPage3.Location = new Point(4, 29);
             tabPage3.Name = "tabPage3";
             tabPage3.Padding = new Padding(3);
@@ -766,6 +853,7 @@
             freeInputTextBox.Name = "freeInputTextBox";
             freeInputTextBox.Size = new Size(357, 27);
             freeInputTextBox.TabIndex = 2;
+            freeInputTextBox.TextChanged += freeInputTextBox_TextChanged;
             // 
             // label10
             // 
@@ -779,6 +867,8 @@
             // autocompleteAutosuggestSplitButton
             // 
             autocompleteAutosuggestSplitButton.ContextMenuStrip = contextMenuStrip1;
+            autocompleteAutosuggestSplitButton.DropDownButton = true;
+            inputErrorProvider.SetIconAlignment(autocompleteAutosuggestSplitButton, ErrorIconAlignment.MiddleLeft);
             autocompleteAutosuggestSplitButton.Location = new Point(764, 156);
             autocompleteAutosuggestSplitButton.Name = "autocompleteAutosuggestSplitButton";
             autocompleteAutosuggestSplitButton.Size = new Size(126, 39);
@@ -826,20 +916,33 @@
             // 
             // apiGroupBox
             // 
+            apiGroupBox.Controls.Add(hereCheckBox);
             apiGroupBox.Controls.Add(smartyCheckBox);
             apiGroupBox.Controls.Add(loqateCheckBox);
             apiGroupBox.Controls.Add(googleMapsCheckBox);
-            apiGroupBox.Location = new Point(748, 55);
+            apiChoiceErrorProvider.SetIconAlignment(apiGroupBox, ErrorIconAlignment.MiddleLeft);
+            apiGroupBox.Location = new Point(723, 54);
             apiGroupBox.Name = "apiGroupBox";
-            apiGroupBox.Size = new Size(344, 68);
+            apiGroupBox.Size = new Size(369, 68);
             apiGroupBox.TabIndex = 44;
             apiGroupBox.TabStop = false;
             apiGroupBox.Text = "Api";
             // 
+            // hereCheckBox
+            // 
+            hereCheckBox.AutoSize = true;
+            hereCheckBox.Location = new Point(298, 26);
+            hereCheckBox.Name = "hereCheckBox";
+            hereCheckBox.Size = new Size(63, 24);
+            hereCheckBox.TabIndex = 3;
+            hereCheckBox.Text = "Here";
+            hereCheckBox.UseVisualStyleBackColor = true;
+            hereCheckBox.CheckedChanged += hereCheckBox_CheckedChanged;
+            // 
             // smartyCheckBox
             // 
             smartyCheckBox.AutoSize = true;
-            smartyCheckBox.Location = new Point(261, 26);
+            smartyCheckBox.Location = new Point(215, 26);
             smartyCheckBox.Name = "smartyCheckBox";
             smartyCheckBox.Size = new Size(77, 24);
             smartyCheckBox.TabIndex = 2;
@@ -850,7 +953,7 @@
             // loqateCheckBox
             // 
             loqateCheckBox.AutoSize = true;
-            loqateCheckBox.Location = new Point(153, 26);
+            loqateCheckBox.Location = new Point(132, 26);
             loqateCheckBox.Name = "loqateCheckBox";
             loqateCheckBox.Size = new Size(77, 24);
             loqateCheckBox.TabIndex = 1;
@@ -896,10 +999,13 @@
             loqateTabPage.ResumeLayout(false);
             loqateTabPage.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)loqateResponseDataGridView).EndInit();
-            tabPage1.ResumeLayout(false);
-            tabPage1.PerformLayout();
+            smartyTabPage.ResumeLayout(false);
+            smartyTabPage.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)smartyResponseComponetsDataGridView).EndInit();
             ((System.ComponentModel.ISupportInitialize)smartyResponseAnalisisDataGridView).EndInit();
+            hereTabPage.ResumeLayout(false);
+            hereTabPage.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)hereResponseDataGridView).EndInit();
             groupBox1.ResumeLayout(false);
             inputGroupBox.ResumeLayout(false);
             inputGroupBox.PerformLayout();
@@ -1021,7 +1127,7 @@
         private ErrorProvider apiChoiceErrorProvider;
         private TextBox googleResponseStreetTextBox;
         private Label label45;
-        private TabPage tabPage1;
+        private TabPage smartyTabPage;
         private ListBox smartyResponseListBox;
         private CheckBox smartyCheckBox;
         private DataGridView smartyResponseComponetsDataGridView;
@@ -1044,5 +1150,12 @@
         private TabPage tabPage3;
         private TextBox freeInputTextBox;
         private Label label10;
+        private CheckBox hereCheckBox;
+        private TabPage hereTabPage;
+        private DataGridView hereResponseDataGridView;
+        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
+        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
+        private Label label48;
+        private ListBox hereResponseListBox;
     }
 }
