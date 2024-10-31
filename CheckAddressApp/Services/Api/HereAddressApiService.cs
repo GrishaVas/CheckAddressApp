@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Json;
 using CheckAddressApp.Models.Here;
 
-namespace CheckAddressApp.Services
+namespace CheckAddressApp.Services.Api
 {
     public class HereAddressApiService
     {
@@ -27,7 +27,6 @@ namespace CheckAddressApp.Services
         {
             var url = getAutocompleteUrl(request);
             var response = await _httpClient.GetAsync(url);
-            var str = await response.Content.ReadAsStringAsync();
             var result = await response.Content.ReadFromJsonAsync<AutocompleteAddressResponse>();
 
             return result;
@@ -37,24 +36,9 @@ namespace CheckAddressApp.Services
         {
             var url = getAutosuggestUrl(request);
             var response = await _httpClient.GetAsync(url);
-            var str = await response.Content.ReadAsStringAsync();
             var result = await response.Content.ReadFromJsonAsync<AutosuggestAddressResponse>();
 
             return result;
-        }
-        public string GetTreeLetterCoutryCode(string twoLetterCountryCode)
-        {
-            switch (twoLetterCountryCode)
-            {
-                case "DE":
-                    return "DEU";
-                case "US":
-                    return "USA";
-                case "":
-                    return "";
-                default:
-                    throw new ArgumentException("Wrong twoLetterCountryCode");
-            }
         }
         private string getValidationUrl(ValidateAddressRequest request)
         {

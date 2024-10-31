@@ -2,9 +2,8 @@
 using System.Net.Http.Json;
 using CheckAddressApp.Models.Google;
 using Google.Maps.AddressValidation.V1;
-using Google.Protobuf.Collections;
 
-namespace CheckAddressApp.Services
+namespace CheckAddressApp.Services.Api
 {
     public class GoogleAddressApiService
     {
@@ -30,23 +29,6 @@ namespace CheckAddressApp.Services
             var response = await addressValidationClient.ValidateAddressAsync(request);
 
             return response;
-        }
-
-        public string[] GetVerdictString(Verdict verdict)
-        {
-            return [$"InputGranularity: {verdict.InputGranularity}",
-                $"ValidationGranularity: {verdict.ValidationGranularity}",
-                $"GeocodeGranularity: {verdict.GeocodeGranularity}",
-                $"AddressComplete: {verdict.AddressComplete}",
-                $"HasUnconfirmedComponents: {verdict.HasUnconfirmedComponents}",
-                $"HasInferredComponents: {verdict.HasInferredComponents}",
-                $"HasReplacedComponents: {verdict.HasReplacedComponents}"];
-        }
-        public string[] GetComponentsComfirmationString(RepeatedField<AddressComponent> componets)
-        {
-            var result = componets.Select(c => $"{c.ComponentName.Text} : {c.ConfirmationLevel}").ToArray();
-
-            return result;
         }
 
         public async Task<AutocompleteAddressResponse> AutocompleteAddress(AutocompleteAddressRequest request)

@@ -1,42 +1,102 @@
 using CheckAddressApp.Models;
-using CheckAddressApp.Models.Google;
 using CheckAddressApp.Services;
 using Google.Maps.AddressValidation.V1;
-using Google.Type;
 using Microsoft.Extensions.Configuration;
 
 namespace CheckAddressApp
 {
     public partial class CheckAddressForm : Form
     {
-        private GoogleAddressApiService _googleAddressApiService;
-        private LoqateAddressApiService _loqateAddressApiService;
-        private SmartyAddressApiService _smartyAddressApiService;
-        private HereAddressApiService _hereAddressApiService;
+        private GoogleService _googleService;
+        private LoqateService _loqateService;
+        private SmartyService _smartyService;
+        private HereService _hereService;
         private IConfiguration _conf;
         private Models.Loqate.ValidateAddressResponse _loqateValidateResponse;
         private Models.Smarty.ValidateAddressResponse _smartyValidateResponse;
         private Models.Here.ValidateAddressResponse _hereValidateResponse;
+        private List<(string Name, string ISO2, string ISO3)> countries = new List<(string Name, string ISO2, string ISO3)>
+        {
+            {("United States","US","USA")},
+            {("Slovakia","SK","SVK")},
+            {("Slovenia","SI","SVN")},
+            {("Singapore","SG","SGP")},
+            {("Sweden","SE","SWE")},
+            {("Portugal","PT","PRT")},
+            {("Puerto Rico","PR","PRI")},
+            {("Poland","PL","POL")},
+            {("New Zealand","NZ","NZL")},
+            {("Norway","NO","NOR")},
+            {("Netherlands","NL","NLD")},
+            {("Malaysia","MY","MYS")},
+            {("Mexico","MX","MEX")},
+            {("Latvia","LV","LVA")},
+            {("Luxembourg","LU","LUX")},
+            {("Lithuania","LT","LTU")},
+            {("Italy","IT","ITA")},
+            {("India","IN","IND")},
+            {("Ireland","IE","IRL")},
+            {("Hungary","HU","HUN")},
+            {("Croatia","HR","HRV")},
+            {("United kingdom","GB","GBR")},
+            {("France","FR","FRA")},
+            {("Finland","FI","FIN")},
+            {("Spain","ES","ESP")},
+            {("Estonia","EE","EST")},
+            {("Denmark","DK","DNK")},
+            {("Germany","DE","DEU")},
+            {("Czechia","CZ","CZE")},
+            {("Colombia","CO","COL")},
+            {("Chile","CL","CHL")},
+            {("Switzerland","CH","CHE")},
+            {("Canada","CA","CAN")},
+            {("Brazil","BR","BRA")},
+            {("Bulgaria","BG","BGR")},
+            {("Belgium","BE","BEL")},
+            {("Australia","AU","AUS")},
+            {("Austria","AT","AUT")},
+            {("Argentina","AR","ARG")}
+        };
 
         public CheckAddressForm(IConfiguration conf)
         {
-            _smartyAddressApiService = new SmartyAddressApiService(
-                conf["Smarty:AuthId"],
-                conf["Smarty:AuthToken"]);
-            _googleAddressApiService = new GoogleAddressApiService(conf["Google:ApiKey"],
-                conf["Google:ClientId"],
-                conf["Google:ClientSecret"],
-                conf["Google:RefreshToken"]);
-            _loqateAddressApiService = new LoqateAddressApiService();
-            _hereAddressApiService = new HereAddressApiService(conf["Here:ApiKey"]);
+            _smartyService = new SmartyService(conf);
+            _googleService = new GoogleService(conf);
+            _loqateService = new LoqateService(conf);
+            _hereService = new HereService(conf);
             _conf = conf;
 
             InitializeComponent();
         }
         ~CheckAddressForm()
         {
-            _loqateAddressApiService.Dispose();
+            //_loqateAddressApiService.Dispose();
         }
+
+        private int checkedApiChoicesCount()
+        {
+            var count = 0;
+
+            if (googleMapsCheckBox.Checked)
+            {
+                count++;
+            }
+            if (hereCheckBox.Checked)
+            {
+                count++;
+            }
+            if (loqateCheckBox.Checked)
+            {
+                count++;
+            }
+            if (smartyCheckBox.Checked)
+            {
+                count++;
+            }
+
+            return count;
+        }
+
         private void clearGoogleResponse()
         {
             googleResponseRegionCodeTextBox.Text = "";
@@ -70,12 +130,22 @@ namespace CheckAddressApp
         {
             hereResponseListBox.Items.Clear();
             hereResponseDataGridView.Rows.Clear();
+            _hereValidateResponse = null;
+        }
+
+        private (string ISO2, string ISO3) getCoutryCodeFromInput()
+        {
+            var country = countryTextBox.Text.ToLower();
+            var countryCode = countries.FirstOrDefault(c => c.Name.ToLower() == country);
+
+            return (countryCode.ISO2 ?? "", countryCode.ISO3 ?? "");
         }
 
         private void fillRequestAddress(string input)
         {
+            var countryCodes = getCoutryCodeFromInput();
             var requestAddress = input +
-                (countryCodeComboBox.Text != "" ? $" | Country code: {countryCodeComboBox.Text}" : "");
+                (countryCodes.ISO2 != null ? $" | Country code: {countryCodes.ISO2}" : "");
 
             requestAddressTextBox.Text = requestAddress;
         }
@@ -90,16 +160,29 @@ namespace CheckAddressApp
             return input;
         }
 
-        private async Task loqateValidation(Models.Loqate.ValidateAddressRequest request)
+        private async Task loqateValidation(StructuredInput input)
+        {
+            var responses = await _loqateService.ValidateAddress(input);
+
+            setLoqateOutput(responses);
+        }
+
+        private async Task loqateValidation(string input, string countryCode)
+        {
+            var responses = await _loqateService.ValidateAddress(input, countryCode);
+
+            setLoqateOutput(responses);
+        }
+
+        private void setLoqateOutput(List<Models.Loqate.ValidateAddressResponse> responses)
         {
             clearLoqateResponse();
 
-            var responses = await _loqateAddressApiService.ValidateAddress(request);
             var reponse = responses.FirstOrDefault();
 
             _loqateValidateResponse = reponse;
 
-            var addresses = reponse.Matches.Select(m => m.Address).ToArray();//none
+            var addresses = reponse.Matches.Select(m => m.Address).Where(a => !string.IsNullOrEmpty(a)).ToArray();
 
             if (addresses != null || addresses.Length > 0)
             {
@@ -107,56 +190,30 @@ namespace CheckAddressApp
             }
         }
 
-        private Models.Loqate.ValidateAddressRequest getLoqateValidationAddress(StructuredInput input)
+        private async Task googleValidation(StructuredInput input)
         {
-            var request = new Models.Loqate.ValidateAddressRequest
-            {
-                Key = _conf["Loqate:ApiKey"],
-                Addresses = new List<Models.Loqate.ValidateAddressRequestAddress>
-                {
-                    new Models.Loqate.ValidateAddressRequestAddress
-                    {
-                        Address = input.Input,
-                        Locality = input.City,
-                        DependentLocality = input.District,
-                        PostalCode = input.PostalCode,
-                        Country = input.CountryCode,
-                        Address1 = input.StreetAndHouseNumber
-                    }
-                }
-            };
+            var response = await _googleService.ValidateAddress(input);
 
-            return request;
+            setGoogleOutput(response);
         }
 
-        private Models.Loqate.ValidateAddressRequest getLoqateValidationAddress(string input)
+        private async Task googleValidation(string input, string countryCode)
         {
-            var request = new Models.Loqate.ValidateAddressRequest
-            {
-                Key = _conf["Loqate:ApiKey"],
-                Addresses = new List<Models.Loqate.ValidateAddressRequestAddress>
-                {
-                    new Models.Loqate.ValidateAddressRequestAddress
-                    {
-                        Address = input
-                    }
-                }
-            };
+            var response = await _googleService.ValidateAddress(input, countryCode);
 
-            return request;
+            setGoogleOutput(response);
         }
 
-        private async Task googleValidation(ValidateAddressRequest requst)
+        private void setGoogleOutput(ValidateAddressResponse response)
         {
             clearGoogleResponse();
 
-            var response = await _googleAddressApiService.ValidateAddress(requst);
             var responseAddress = response.Result.Address;
 
             googleResponseFormattedAddressTextBox.Text = responseAddress.FormattedAddress;
 
-            var generalVerdict = _googleAddressApiService.GetVerdictString(response.Result.Verdict).Select(x => $"    {x}\n");
-            var componetsConfirmation = _googleAddressApiService.GetComponentsComfirmationString(responseAddress.AddressComponents).Select(x => $"    {x}\n");
+            var generalVerdict = _googleService.GetVerdictString(response.Result.Verdict).Select(x => $"    {x}\n");
+            var componetsConfirmation = _googleService.GetComponentsComfirmationString(responseAddress.AddressComponents).Select(x => $"    {x}\n");
 
             googleResponseOutputTextBox.Text = $"generalVerdict:\n{string.Join("", generalVerdict)}\ncomponentsComfirmation:\n{string.Join("", componetsConfirmation)}";
 
@@ -176,64 +233,31 @@ namespace CheckAddressApp
             googleResponseStreetTextBox.Text = $"{street} {houseNumber}";
         }
 
-        private ValidateAddressRequest getGoogleValidationRequest(StructuredInput structuredInput)
-        {
-            var address = new PostalAddress()
-            {
-                RegionCode = structuredInput.CountryCode,
-                Locality = structuredInput.City,
-                PostalCode = structuredInput.PostalCode,
-                Sublocality = structuredInput.District
-            };
-
-            address.AddressLines.Add(structuredInput.Input);
-
-            var addressValidationRequest = new ValidateAddressRequest
-            {
-                Address = address
-            };
-
-            return addressValidationRequest;
-        }
-        private ValidateAddressRequest getGoogleValidationRequest(string input)
-        {
-            var address = new PostalAddress()
-            {
-                RegionCode = countryCodeComboBox.Text
-            };
-
-            address.AddressLines.Add(input);
-
-            var addressValidationRequest = new ValidateAddressRequest
-            {
-                Address = address
-            };
-
-            return addressValidationRequest;
-        }
-
         private void smartyValidation(string input)
         {
             clearSmartyResponse();
 
-            if (string.IsNullOrEmpty(countryCodeComboBox.Text))
+            var countryCodes = getCoutryCodeFromInput();
+            var countryCode = countryCodes.ISO2;
+
+            if (string.IsNullOrEmpty(countryCode))
             {
-                smartyCountryCodeErrorProvider.SetError(countryCodeComboBox, "The Country Code required for smarty API.");
+                smartyCountryCodeErrorProvider.SetError(countryTextBox, "The Country Code required for smarty API.");
 
                 return;
             }
 
-            if (countryCodeComboBox.Text == "US")
+            if (countryCode == "US")
             {
-                var lookup = new SmartyStreets.USStreetApi.Lookup(input);
+                var lookup = _smartyService.ValidateUSAddress(input);
 
-                smartyUSValidation(lookup);
+                setSmartyUSOutput(lookup);
             }
             else
             {
-                var lookup = new SmartyStreets.InternationalStreetApi.Lookup(input, countryCodeComboBox.Text);
+                var lookup = _smartyService.ValidateInternationalAddress(input, countryCode);
 
-                smartyInternationalValidation(lookup);
+                setSmartyInternationalOutput(lookup);
             }
         }
 
@@ -241,43 +265,29 @@ namespace CheckAddressApp
         {
             clearSmartyResponse();
 
-            if (string.IsNullOrEmpty(input.CountryCode))
+            if (string.IsNullOrEmpty(input.CountryCode2))
             {
-                smartyCountryCodeErrorProvider.SetError(countryCodeComboBox, "The Country Code required for smarty API.");
+                smartyCountryCodeErrorProvider.SetError(countryTextBox, "The Country Code required for smarty API.");
 
                 return;
             }
 
-            if (input.CountryCode == "US")
+            if (input.CountryCode2 == "US")
             {
-                var lookup = new SmartyStreets.USStreetApi.Lookup(input.Input)
-                {
-                    ZipCode = input.PostalCode,
-                    City = input.City,
-                    Urbanization = input.District,
-                    Street2 = input.StreetAndHouseNumber
-                };
+                var lookup = _smartyService.ValidateUSAddress(input);
 
-                smartyUSValidation(lookup);
+                setSmartyUSOutput(lookup);
             }
             else
             {
-                var lookup = new SmartyStreets.InternationalStreetApi.Lookup(input.Input, input.CountryCode)
-                {
-                    PostalCode = input.PostalCode,
-                    Locality = input.City,
-                    Address1 = input.StreetAndHouseNumber,
-                    Address2 = input.District
-                };
+                var lookup = _smartyService.ValidateInternationalAddress(input);
 
-                smartyInternationalValidation(lookup);
+                setSmartyInternationalOutput(lookup);
             }
         }
 
-        private void smartyUSValidation(SmartyStreets.USStreetApi.Lookup lookup)
+        private void setSmartyUSOutput(SmartyStreets.USStreetApi.Lookup lookup)
         {
-            _smartyAddressApiService.ValidateUSAddress(lookup);
-
             var results = lookup.Result.Select(r => $"{r.DeliveryLine1} {r.DeliveryLine2} {r.LastLine}").ToArray();
 
             smartyResponseListBox.Items.AddRange(results);
@@ -288,10 +298,8 @@ namespace CheckAddressApp
             };
         }
 
-        private void smartyInternationalValidation(SmartyStreets.InternationalStreetApi.Lookup lookup)
+        private void setSmartyInternationalOutput(SmartyStreets.InternationalStreetApi.Lookup lookup)
         {
-            _smartyAddressApiService.ValidateInternationalAddress(lookup);
-
             var results = lookup.Result.Select(r => $"{r.Address1} {r.Address2} {r.Address3}").ToArray();
 
             smartyResponseListBox.Items.AddRange(results);
@@ -302,48 +310,35 @@ namespace CheckAddressApp
             };
         }
 
-        private async Task hereValidation(Models.Here.ValidateAddressRequest request)
+        private async Task hereValidation(string input, string countryCode)
+        {
+            var validateAddresResponse = await _hereService.ValidateAddress(input, countryCode);
+
+            setHereOutput(validateAddresResponse);
+        }
+
+        private async Task hereValidation(StructuredInput input)
+        {
+            var validateAddresResponse = await _hereService.ValidateAddress(input);
+
+            setHereOutput(validateAddresResponse);
+        }
+
+        private void setHereOutput(Models.Here.ValidateAddressResponse response)
         {
             clearHereResponse();
 
-            var validateAddresResponse = await _hereAddressApiService.ValidateAddress(request);
-            var matches = validateAddresResponse.Items.Select(i => i.Title);
+            var matches = response.Items.Select(i => i.Title);
 
-            _hereValidateResponse = validateAddresResponse;
+            _hereValidateResponse = response;
             hereResponseListBox.Items.AddRange(matches.ToArray());
         }
 
-        private Models.Here.ValidateAddressRequest getHereValidationAddress(StructuredInput input)
-        {
-            var validateAddressRequest = new Models.Here.ValidateAddressRequest(input.Input)
-            {
-                In = _hereAddressApiService.GetTreeLetterCoutryCode(countryCodeComboBox.Text)
-            };
-
-            return validateAddressRequest;
-        }
-
-        private Models.Here.ValidateAddressRequest getHereValidationAddress(string input)
-        {
-            var validateAddressRequest = new Models.Here.ValidateAddressRequest(input)
-            {
-                In = _hereAddressApiService.GetTreeLetterCoutryCode(countryCodeComboBox.Text)
-            };
-
-            return validateAddressRequest;
-        }
-
-        private async Task loqateAutocomplete(string input)
+        private async Task loqateAutocomplete(string input, string countryCode)
         {
             clearLoqateResponse();
 
-            var autocompleteAddressRequest = new Models.Loqate.AutocompleteAddressRequest
-            {
-                Key = _conf["Loqate:ApiKey"],
-                Text = input,
-                Origin = countryCodeComboBox.Text
-            };
-            var autocompleteAddressResponses = await _loqateAddressApiService.AutocompleteAddress(autocompleteAddressRequest);
+            var autocompleteAddressResponses = await _loqateService.AutocompleteAddress(input, countryCode);
             var suggestions = autocompleteAddressResponses.Items.Select(i => $"{i.Text} {i.Description}");
 
             if (suggestions != null && suggestions.Count() > 0)
@@ -352,15 +347,11 @@ namespace CheckAddressApp
             }
         }
 
-        private async Task googleAutocomplete(string input)
+        private async Task googleAutocomplete(string input, string countryCode)
         {
             clearGoogleResponse();
 
-            var autocompleteAddressRequest = new AutocompleteAddressRequest(input)
-            {
-                RegionCode = countryCodeComboBox.Text
-            };
-            var autocompleteAddressResponse = await _googleAddressApiService.AutocompleteAddress(autocompleteAddressRequest);
+            var autocompleteAddressResponse = await _googleService.AutocompleteAddress(input, countryCode);
             var suggestions = autocompleteAddressResponse.Suggestions?.Select(s => $"\"{s.PlacePrediction.Text.Text}\"\n");
 
             if (suggestions != null && suggestions.Count() > 0)
@@ -373,43 +364,40 @@ namespace CheckAddressApp
         {
             clearSmartyResponse();
 
-            if (string.IsNullOrEmpty(countryCodeComboBox.Text))
+            var countryCodes = getCoutryCodeFromInput();
+            var countryCode = countryCodes.ISO2;
+
+            if (string.IsNullOrEmpty(countryCode))
             {
-                smartyCountryCodeErrorProvider.SetError(countryCodeComboBox, "The Country Code required for smarty API.");
+                smartyCountryCodeErrorProvider.SetError(countryTextBox, "The Country Code required for smarty API.");
 
                 return;
             }
 
-            var countryCode = countryCodeComboBox.Text;
-            var suggestions = _smartyAddressApiService.AutocompleteAddress(input, countryCode);
+
+            var suggestions = _smartyService.AutocompleteAddress(input, countryCode);
 
             smartyResponseListBox.Items.AddRange(suggestions.ToArray());
         }
 
-        private async Task hereAutocomplete(string input)
+        private async Task hereAutocomplete(string input, string countryCode)
         {
             clearHereResponse();
 
-            var hereAutocompleteRequest = new Models.Here.AutocompleteAddressRequest(input)
+            var hereAutocompleteResponse = await _hereService.AutocompleteAddress(input, countryCode);
+            var suggestions = hereAutocompleteResponse.Items?.Select(i => i.Title);
+
+            if (suggestions != null)
             {
-                In = _hereAddressApiService.GetTreeLetterCoutryCode(countryCodeComboBox.Text)
-            };
-
-            var hereAutocompleteResponse = await _hereAddressApiService.AutocompleteAddress(hereAutocompleteRequest);
-            var suggestions = hereAutocompleteResponse.Items.Select(i => i.Title);
-
-            hereResponseListBox.Items.AddRange(suggestions.ToArray());
+                hereResponseListBox.Items.AddRange(suggestions.ToArray());
+            }
         }
 
-        private async Task hereAutosuggest(string input)
+        private async Task hereAutosuggest(string input, string countryCode)
         {
             clearHereResponse();
-            var @in = _hereAddressApiService.GetTreeLetterCoutryCode(countryCodeComboBox.Text);
-            var hereValidateRequest = new Models.Here.ValidateAddressRequest(input)
-            {
-                In = @in
-            };
-            var hereValidateResponse = await _hereAddressApiService.ValidateAddress(hereValidateRequest);
+
+            var hereValidateResponse = await _hereService.ValidateAddress(input, countryCode);
             var item = hereValidateResponse.Items.FirstOrDefault();
 
             if (item == null)
@@ -417,13 +405,9 @@ namespace CheckAddressApp
                 return;
             }
 
-            var at = item.Position.Lat + "," + item.Position.Lng;
-            var hereAutosuggestRequest = new Models.Here.AutosuggestAddressRequest(input, at)
-            {
-                In = @in
-            };
-
-            var hereAutosuggestResponse = await _hereAddressApiService.AutosuggestAddress(hereAutosuggestRequest);
+            var lat = item.Position.Lat.ToString();
+            var lng = item.Position.Lng.ToString();
+            var hereAutosuggestResponse = await _hereService.AutosuggestAddress(input, countryCode, lat, lng);
             var suggestions = hereAutosuggestResponse.Items.Select(i => i.Title);
 
             hereResponseListBox.Items.AddRange(suggestions.ToArray());
@@ -431,6 +415,11 @@ namespace CheckAddressApp
 
         private IEnumerable<(string Field, string Value)> getMatchsRows(object match)
         {
+            if (match == null)
+            {
+                return [];
+            }
+
             var rows = match.GetType().GetProperties().Where(p => p.PropertyType.IsValueType || p.PropertyType == typeof(string)).Select(p =>
                     (
                         Field: p.Name,
@@ -442,23 +431,19 @@ namespace CheckAddressApp
 
         private async Task autocomplete(string input)
         {
-            if (!googleMapsCheckBox.Checked && !loqateCheckBox.Checked && !smartyCheckBox.Checked && !hereCheckBox.Checked)
-            {
-                apiChoiceErrorProvider.SetError(apiGroupBox, "Select at least one api.");
-
-                return;
-            }
-
             fillRequestAddress(input);
+
+            var countryCodes = getCoutryCodeFromInput();
+            var countryCode = countryCodes.ISO2;
 
             if (googleMapsCheckBox.Checked)
             {
-                await googleAutocomplete(input);
+                await googleAutocomplete(input, countryCode);
             }
 
             if (loqateCheckBox.Checked)
             {
-                await loqateAutocomplete(input);
+                await loqateAutocomplete(input, countryCode);
             }
 
             if (smartyCheckBox.Checked)
@@ -468,7 +453,7 @@ namespace CheckAddressApp
 
             if (hereCheckBox.Checked)
             {
-                await hereAutocomplete(input);
+                await hereAutocomplete(input, countryCode);
             }
         }
 
@@ -481,9 +466,11 @@ namespace CheckAddressApp
                 return;
             }
 
+            var countryCodes = getCoutryCodeFromInput();
+
             if (hereCheckBox.Checked && !googleMapsCheckBox.Checked && !loqateCheckBox.Checked && !smartyCheckBox.Checked)
             {
-                await hereAutosuggest(input);
+                await hereAutosuggest(input, countryCodes.ISO3);
             }
             else
             {
@@ -495,16 +482,12 @@ namespace CheckAddressApp
         {
             if (googleMapsCheckBox.Checked)
             {
-                var googleRequest = getGoogleValidationRequest(input);
-
-                await googleValidation(googleRequest);
+                await googleValidation(input);
             }
 
             if (loqateCheckBox.Checked)
             {
-                var loqateRequest = getLoqateValidationAddress(input);
-
-                await loqateValidation(loqateRequest);
+                await loqateValidation(input);
             }
 
             if (smartyCheckBox.Checked)
@@ -514,25 +497,22 @@ namespace CheckAddressApp
 
             if (hereCheckBox.Checked)
             {
-                var hereRequest = getHereValidationAddress(input);
-
-                await hereValidation(hereRequest);
+                await hereValidation(input);
             }
         }
+
         private async Task validation(string input)
         {
+            var countryCodes = getCoutryCodeFromInput();
+
             if (googleMapsCheckBox.Checked)
             {
-                var googleRequest = getGoogleValidationRequest(input);
-
-                await googleValidation(googleRequest);
+                await googleValidation(input, countryCodes.ISO2);
             }
 
             if (loqateCheckBox.Checked)
             {
-                var loqateRequest = getLoqateValidationAddress(input);
-
-                await loqateValidation(loqateRequest);
+                await loqateValidation(input, countryCodes.ISO2);
             }
 
             if (smartyCheckBox.Checked)
@@ -542,25 +522,22 @@ namespace CheckAddressApp
 
             if (hereCheckBox.Checked)
             {
-                var hereRequest = getHereValidationAddress(input);
-
-                await hereValidation(hereRequest);
+                await hereValidation(input, countryCodes.ISO3);
             }
         }
 
         private void clearInputs()
         {
             streetAndHouseNumberTextBox.Text = "";
-            countryCodeComboBox.Text = "";
+            countryTextBox.Text = "";
             cityTextBox.Text = "";
             postalCodeTextBox.Text = "";
             districtTextBox.Text = "";
             requestAddressTextBox.Text = "";
-            countryCodeComboBox.SelectedItem = null;
             freeInputTextBox.Text = "";
 
             inputErrorProvider.SetError(inputsChoiceTabControl, "");
-            smartyCountryCodeErrorProvider.SetError(countryCodeComboBox, "");
+            smartyCountryCodeErrorProvider.SetError(countryTextBox, "");
         }
 
         private void clearChoiceApi()
@@ -575,13 +552,15 @@ namespace CheckAddressApp
 
         private StructuredInput getStructuredInput()
         {
+            var countryCodes = getCoutryCodeFromInput();
             var input = new StructuredInput
             {
                 StreetAndHouseNumber = streetAndHouseNumberTextBox.Text,
                 City = cityTextBox.Text,
                 District = districtTextBox.Text,
                 PostalCode = postalCodeTextBox.Text,
-                CountryCode = countryCodeComboBox.Text,
+                CountryCode2 = countryCodes.ISO2,
+                CountryCode3 = countryCodes.ISO3,
                 Input = getOneLineInput()
             };
 
@@ -590,13 +569,6 @@ namespace CheckAddressApp
 
         private async void checkButton_Click(object sender, EventArgs e)
         {
-            if (!googleMapsCheckBox.Checked && !loqateCheckBox.Checked && !smartyCheckBox.Checked && !hereCheckBox.Checked)
-            {
-                apiChoiceErrorProvider.SetError(apiGroupBox, "Select at least one api");
-
-                return;
-            }
-
             var selectedInputType = inputsChoiceTabControl.SelectedTab.Text;
             StructuredInput structuredInput;
 
@@ -606,7 +578,7 @@ namespace CheckAddressApp
 
                 fillRequestAddress(structuredInput.Input);
 
-                if (string.IsNullOrEmpty(structuredInput.Input))
+                if (string.IsNullOrEmpty(structuredInput.Input.Trim()))
                 {
                     inputErrorProvider.SetError(inputsChoiceTabControl, "At least one input must be filled.");
 
@@ -622,7 +594,7 @@ namespace CheckAddressApp
 
                 fillRequestAddress(input);
 
-                if (string.IsNullOrEmpty(input))
+                if (string.IsNullOrEmpty(input.Trim()))
                 {
                     inputErrorProvider.SetError(inputsChoiceTabControl, "Address required.");
 
@@ -642,7 +614,7 @@ namespace CheckAddressApp
             {
                 input = getOneLineInput();
 
-                if (string.IsNullOrEmpty(input))
+                if (string.IsNullOrEmpty(input.Trim()))
                 {
                     inputErrorProvider.SetError(inputsChoiceTabControl, "At least one input must be filled.");
 
@@ -653,7 +625,7 @@ namespace CheckAddressApp
             {
                 input = freeInputTextBox.Text;
 
-                if (string.IsNullOrEmpty(input))
+                if (string.IsNullOrEmpty(input.Trim()))
                 {
                     inputErrorProvider.SetError(inputsChoiceTabControl, "Address required.");
 
@@ -679,12 +651,14 @@ namespace CheckAddressApp
                 var match = _loqateValidateResponse.Matches.FirstOrDefault(m => m.Address == item);
                 var rows = getMatchsRows(match);
 
+                loqateResponseDataGridView.Rows.Clear();
+
                 foreach (var row in rows)
                 {
                     loqateResponseDataGridView.Rows.Add(row.Field, row.Value);
                 }
 
-                loqateResponseVerificationLavelTextBox.Text = _loqateAddressApiService.GetMatchVerificationLavel(match.AQI);
+                loqateResponseVerificationLavelTextBox.Text = _loqateService.GetMatchVerificationLavel(match.AQI);
             }
         }
 
@@ -741,6 +715,8 @@ namespace CheckAddressApp
                 var address = match.Address;
                 var rows = getMatchsRows(address);
 
+                hereResponseDataGridView.Rows.Clear();
+
                 foreach (var row in rows)
                 {
                     hereResponseDataGridView.Rows.Add(row.Field, row.Value);
@@ -750,7 +726,7 @@ namespace CheckAddressApp
 
         private void regionCodeComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            smartyCountryCodeErrorProvider.SetError(countryCodeComboBox, "");
+            smartyCountryCodeErrorProvider.SetError(countryTextBox, "");
         }
 
         private void addressTextBox_TextChanged(object sender, EventArgs e)
@@ -777,18 +753,81 @@ namespace CheckAddressApp
         {
             apiChoiceErrorProvider.SetError(apiGroupBox, "");
             inputErrorProvider.SetError(autocompleteAutosuggestSplitButton, "");
+
+            var count = checkedApiChoicesCount();
+            if (count == 0)
+            {
+                googleMapsCheckBox.Checked = true;
+                apiChoiceErrorProvider.SetError(apiGroupBox, "Atleast one api need to be checked");
+
+                return;
+            }
+
+            if (googleMapsCheckBox.Checked)
+            {
+                if (count != 1)
+                {
+                    apiTabControl.TabPages.Add(googleMapsTabPage);
+                }
+            }
+            else
+            {
+                apiTabControl.TabPages.Remove(googleMapsTabPage);
+            }
         }
 
         private void loqateCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             apiChoiceErrorProvider.SetError(apiGroupBox, "");
             inputErrorProvider.SetError(autocompleteAutosuggestSplitButton, "");
+
+            var count = checkedApiChoicesCount();
+            if (count == 0)
+            {
+                loqateCheckBox.Checked = true;
+                apiChoiceErrorProvider.SetError(apiGroupBox, "Atleast one api need to be checked");
+
+                return;
+            }
+
+            if (loqateCheckBox.Checked)
+            {
+                if (count != 1)
+                {
+                    apiTabControl.TabPages.Add(loqateTabPage);
+                }
+            }
+            else
+            {
+                apiTabControl.TabPages.Remove(loqateTabPage);
+            }
         }
 
         private void smartyCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             apiChoiceErrorProvider.SetError(apiGroupBox, "");
             inputErrorProvider.SetError(autocompleteAutosuggestSplitButton, "");
+
+            var count = checkedApiChoicesCount();
+            if (count == 0)
+            {
+                smartyCheckBox.Checked = true;
+                apiChoiceErrorProvider.SetError(apiGroupBox, "Atleast one api need to be checked");
+
+                return;
+            }
+
+            if (smartyCheckBox.Checked)
+            {
+                if (count != 1)
+                {
+                    apiTabControl.TabPages.Add(smartyTabPage);
+                }
+            }
+            else
+            {
+                apiTabControl.TabPages.Remove(smartyTabPage);
+            }
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -815,6 +854,7 @@ namespace CheckAddressApp
         private void contextMenuStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
             autocompleteAutosuggestSplitButton.Text = e.ClickedItem.Text;
+            inputErrorProvider.SetError(autocompleteAutosuggestSplitButton, "");
         }
 
         private void inputsChoice_SelectedIndexChanged(object sender, EventArgs e)
@@ -827,11 +867,51 @@ namespace CheckAddressApp
         {
             apiChoiceErrorProvider.SetError(apiGroupBox, "");
             inputErrorProvider.SetError(autocompleteAutosuggestSplitButton, "");
+
+            var count = checkedApiChoicesCount();
+            if (count == 0)
+            {
+                hereCheckBox.Checked = true;
+                apiChoiceErrorProvider.SetError(apiGroupBox, "Atleast one api need to be checked");
+
+                return;
+            }
+
+            if (hereCheckBox.Checked)
+            {
+                if (count != 1)
+                {
+                    apiTabControl.TabPages.Add(hereTabPage);
+                }
+            }
+            else
+            {
+                apiTabControl.TabPages.Remove(hereTabPage);
+            }
         }
 
         private void freeInputTextBox_TextChanged(object sender, EventArgs e)
         {
             inputErrorProvider.SetError(inputsChoiceTabControl, "");
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            clearHereResponse();
+        }
+
+        private void CheckAddressForm_Load(object sender, EventArgs e)
+        {
+            countryTextBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
+
+            apiTabControl.TabPages.Remove(loqateTabPage);
+            apiTabControl.TabPages.Remove(smartyTabPage);
+            apiTabControl.TabPages.Remove(hereTabPage);
+        }
+
+        private void countryTextBox_TextChanged(object sender, EventArgs e)
+        {
+            smartyCountryCodeErrorProvider.SetError(countryTextBox, "");
         }
     }
 }

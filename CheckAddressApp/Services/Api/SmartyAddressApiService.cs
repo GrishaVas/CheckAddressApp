@@ -1,6 +1,6 @@
 ﻿using SmartyStreets;
 
-namespace CheckAddressApp.Services
+namespace CheckAddressApp.Services.Api
 {
     public class SmartyAddressApiService
     {

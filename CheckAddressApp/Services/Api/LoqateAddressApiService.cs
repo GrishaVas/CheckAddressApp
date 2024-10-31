@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Json;
 using CheckAddressApp.Models.Loqate;
 
-namespace CheckAddressApp.Services
+namespace CheckAddressApp.Services.Api
 {
     public class LoqateAddressApiService : IDisposable
     {
@@ -33,25 +33,6 @@ namespace CheckAddressApp.Services
             var validateAddressResponses = await response.Content.ReadFromJsonAsync<AutocompleteAddressResponse>();
 
             return validateAddressResponses;
-        }
-
-        public string GetMatchVerificationLavel(string AQI)
-        {
-            switch (AQI)
-            {
-                case "A":
-                    return "Excellent";
-                case "B":
-                    return "Good";
-                case "C":
-                    return "Average";
-                case "D":
-                    return "Poor";
-                case "E":
-                    return "Bad";
-                default:
-                    return "Bad";
-            }
         }
 
         public void Dispose()
