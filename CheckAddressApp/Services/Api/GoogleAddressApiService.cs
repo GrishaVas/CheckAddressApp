@@ -50,7 +50,7 @@ namespace CheckAddressApp.Services.Api
 
         private async Task<AccessTokenResponse> getAccessToken()
         {
-            var httpClient = new HttpClient
+            using var httpClient = new HttpClient
             {
                 BaseAddress = new Uri("https://oauth2.googleapis.com/token")
             };

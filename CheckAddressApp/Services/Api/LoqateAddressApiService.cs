@@ -3,7 +3,7 @@ using CheckAddressApp.Models.Loqate;
 
 namespace CheckAddressApp.Services.Api
 {
-    public class LoqateAddressApiService : IDisposable
+    public class LoqateAddressApiService : BaseApiService, IDisposable
     {
         private const string _baseAddress = "https://api.addressy.com/";
         private HttpClient _httpClient;
@@ -18,8 +18,7 @@ namespace CheckAddressApp.Services.Api
         {
             var jsonContent = JsonContent.Create(request);
             var response = await _httpClient.PostAsync("Cleansing/International/Batch/v1.00/json4.ws", jsonContent);
-            var str = await response.Content.ReadAsStringAsync();
-            var validateAddressResponse = await response.Content.ReadFromJsonAsync<List<ValidateAddressResponse>>();
+            var validateAddressResponse = await getResult<List<ValidateAddressResponse>>(response);
 
             return validateAddressResponse;
         }
@@ -29,8 +28,7 @@ namespace CheckAddressApp.Services.Api
             var jsonContent = JsonContent.Create(request);
             var url = getAutocompleteUrl("Capture/Interactive/Find/v1.1/json3.ws", request);
             var response = await _httpClient.PostAsync(url, jsonContent);
-            var str = await response.Content.ReadAsStringAsync();
-            var validateAddressResponses = await response.Content.ReadFromJsonAsync<AutocompleteAddressResponse>();
+            var validateAddressResponses = await getResult<AutocompleteAddressResponse>(response);
 
             return validateAddressResponses;
         }

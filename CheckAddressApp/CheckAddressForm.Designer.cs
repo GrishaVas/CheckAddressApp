@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             streetAndHouseNumberTextBox = new TextBox();
             label1 = new Label();
             checkButton = new Button();
@@ -634,8 +634,8 @@
             // 
             // dataGridViewTextBoxColumn3
             // 
-            dataGridViewCellStyle2.Font = new Font("Microsoft Sans Serif", 8F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle1.Font = new Font("Microsoft Sans Serif", 8F, FontStyle.Regular, GraphicsUnit.Point, 204);
+            dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle1;
             dataGridViewTextBoxColumn3.HeaderText = "Field";
             dataGridViewTextBoxColumn3.MinimumWidth = 6;
             dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
@@ -1005,7 +1005,7 @@
             Controls.Add(inputGroupBox);
             Controls.Add(groupBox1);
             Name = "CheckAddressForm";
-            Text = "CheckAddressForm";
+            Text = "CheckAddress";
             Load += CheckAddressForm_Load;
             apiTabControl.ResumeLayout(false);
             googleMapsTabPage.ResumeLayout(false);

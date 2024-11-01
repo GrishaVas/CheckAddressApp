@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace CheckAddressApp.Services
 {
-    public class LoqateService
+    public class LoqateService : IDisposable
     {
         private LoqateAddressApiService _loqateAddressApiService;
         private IConfiguration _conf;
@@ -102,6 +102,17 @@ namespace CheckAddressApp.Services
             };
 
             return request;
+        }
+
+        public void Dispose()
+        {
+            _loqateAddressApiService.Dispose();
+
+            GC.SuppressFinalize(this);
+        }
+        ~LoqateService()
+        {
+            _loqateAddressApiService.Dispose();
         }
     }
 }

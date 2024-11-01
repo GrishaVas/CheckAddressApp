@@ -1,9 +1,8 @@
-﻿using System.Net.Http.Json;
-using CheckAddressApp.Models.Here;
+﻿using CheckAddressApp.Models.Here;
 
 namespace CheckAddressApp.Services.Api
 {
-    public class HereAddressApiService
+    public class HereAddressApiService : BaseApiService, IDisposable
     {
         private HttpClient _httpClient;
         private string _apiKey;
@@ -18,7 +17,7 @@ namespace CheckAddressApp.Services.Api
         {
             var url = getValidationUrl(request);
             var response = await _httpClient.GetAsync(url);
-            var result = await response.Content.ReadFromJsonAsync<ValidateAddressResponse>();
+            var result = await getResult<ValidateAddressResponse>(response);
 
             return result;
         }
@@ -27,7 +26,7 @@ namespace CheckAddressApp.Services.Api
         {
             var url = getAutocompleteUrl(request);
             var response = await _httpClient.GetAsync(url);
-            var result = await response.Content.ReadFromJsonAsync<AutocompleteAddressResponse>();
+            var result = await getResult<AutocompleteAddressResponse>(response);
 
             return result;
         }
@@ -36,10 +35,18 @@ namespace CheckAddressApp.Services.Api
         {
             var url = getAutosuggestUrl(request);
             var response = await _httpClient.GetAsync(url);
-            var result = await response.Content.ReadFromJsonAsync<AutosuggestAddressResponse>();
+            var result = await getResult<AutosuggestAddressResponse>(response);
 
             return result;
         }
+
+        public void Dispose()
+        {
+            _httpClient.Dispose();
+
+            GC.SuppressFinalize(this);
+        }
+
         private string getValidationUrl(ValidateAddressRequest request)
         {
             var url = "https://discover.search.hereapi.com/v1/geocode";
@@ -50,6 +57,7 @@ namespace CheckAddressApp.Services.Api
 
             return url;
         }
+
         private string getAutocompleteUrl(AutocompleteAddressRequest request)
         {
             var url = "https://autocomplete.search.hereapi.com/v1/autocomplete";
@@ -71,6 +79,11 @@ namespace CheckAddressApp.Services.Api
                 (!string.IsNullOrEmpty(request.In) ? $"&in={request.In}" : "");
 
             return url;
+        }
+
+        ~HereAddressApiService()
+        {
+            _httpClient.Dispose();
         }
     }
 }

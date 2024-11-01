@@ -5,21 +5,19 @@ using Microsoft.Extensions.Configuration;
 
 namespace CheckAddressApp.Services
 {
-    public class HereService
+    public class HereService : IDisposable
     {
         private HereAddressApiService _hereAddressApiService;
-        private IConfiguration _conf;
 
         public HereService(IConfiguration conf)
         {
             _hereAddressApiService = new HereAddressApiService(conf["Here:ApiKey"]);
-            _conf = conf;
         }
 
         public async Task<AutosuggestAddressResponse> AutosuggestAddress(string input, string countryCode, string lat, string lng)
         {
             var at = lat + "," + lng;
-            var hereAutosuggestRequest = new Models.Here.AutosuggestAddressRequest(input, at)
+            var hereAutosuggestRequest = new AutosuggestAddressRequest(input, at)
             {
                 In = countryCode
             };
@@ -73,6 +71,18 @@ namespace CheckAddressApp.Services
             };
 
             return validateAddressRequest;
+        }
+
+        public void Dispose()
+        {
+            _hereAddressApiService.Dispose();
+
+            GC.SuppressFinalize(this);
+        }
+
+        ~HereService()
+        {
+            _hereAddressApiService.Dispose();
         }
     }
 }
