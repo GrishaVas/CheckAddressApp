@@ -1,7 +1,10 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using CheckAddressApp.Models.Google;
+using CheckAddressApp.Models.Google.Autocomplete;
+using Google.Api.Gax.Grpc;
 using Google.Maps.AddressValidation.V1;
+using Google.Maps.Places.V1;
 
 namespace CheckAddressApp.Services.Api
 {
@@ -11,7 +14,9 @@ namespace CheckAddressApp.Services.Api
         private string _clientId;
         private string _clientSecret;
         private string _refreshToken;
+        private AccessTokenResponse _accessTokenResponse;
         private const string _autocompleteEndpoint = "https://places.googleapis.com/v1/places:autocomplete";
+        private const string _placeDetailsEndpoint = "https://places.googleapis.com/v1/places/";
 
         public GoogleAddressApiService(string apiKey, string clientId, string clientSecret, string refreshToken)
         {
@@ -24,7 +29,9 @@ namespace CheckAddressApp.Services.Api
         public async Task<ValidateAddressResponse> ValidateAddress(ValidateAddressRequest request)
         {
             var addressValidationClientBuilder = new AddressValidationClientBuilder();
+
             addressValidationClientBuilder.CredentialsPath = "application_default_credentials.json";
+
             var addressValidationClient = await addressValidationClientBuilder.BuildAsync();
             var response = await addressValidationClient.ValidateAddressAsync(request);
 
@@ -34,12 +41,10 @@ namespace CheckAddressApp.Services.Api
         public async Task<AutocompleteAddressResponse> AutocompleteAddress(AutocompleteAddressRequest request)
         {
             using var httpClient = new HttpClient();
-            var accessTokenResponse = await getAccessToken();
 
             httpClient.BaseAddress = new Uri(_autocompleteEndpoint);
-            httpClient.DefaultRequestHeaders.Add("X-Goog-Api-Key", _apiKey);
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessTokenResponse.access_token);
-            httpClient.DefaultRequestHeaders.Add("X-Goog-User-Project", "checkaddressapp");
+
+            await addAuth(httpClient);
 
             var jsonContent = JsonContent.Create(request);
             var response = await httpClient.PostAsync("", jsonContent);
@@ -48,8 +53,47 @@ namespace CheckAddressApp.Services.Api
             return autoCompleteAddressResponse;
         }
 
+        public async Task<Place> GetPlaceDetails(string placeId, string fields)
+        {
+            var placesClientBuilder = new PlacesClientBuilder();
+
+            placesClientBuilder.CredentialsPath = "application_default_credentials.json";
+
+            var placesClient = placesClientBuilder.Build();
+            var callSettings = CallSettings.FromHeader("X-Goog-FieldMask", fields);
+            var request = new GetPlaceRequest
+            {
+                Name = $"places/{placeId}"
+            };
+            var response = await placesClient.GetPlaceAsync(request, callSettings);
+
+            return response;
+        }
+
+        private string getPlacesDetailsUrl(string placeId, string fields)
+        {
+            var url = _placeDetailsEndpoint +
+                $"{placeId}?fields={fields}&key={_apiKey}";
+
+            return url;
+        }
+
+        private async Task addAuth(HttpClient httpClient)
+        {
+            var accessTokenResponse = await getAccessToken();
+
+            httpClient.DefaultRequestHeaders.Add("X-Goog-Api-Key", _apiKey);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessTokenResponse.access_token);
+            httpClient.DefaultRequestHeaders.Add("X-Goog-User-Project", "checkaddressapp");
+        }
+
         private async Task<AccessTokenResponse> getAccessToken()
         {
+            if (_accessTokenResponse != null)
+            {
+                return _accessTokenResponse;
+            }
+
             using var httpClient = new HttpClient
             {
                 BaseAddress = new Uri("https://oauth2.googleapis.com/token")

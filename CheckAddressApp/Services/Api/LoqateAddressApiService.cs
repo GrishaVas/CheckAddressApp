@@ -14,6 +14,15 @@ namespace CheckAddressApp.Services.Api
             _httpClient.BaseAddress = new Uri(_baseAddress);
         }
 
+        public async Task<GetAddressDetailsResponse> GetAddressDetails(GetAddressDetailsRequest request)
+        {
+            var response = await _httpClient.GetAsync($"Capture/Interactive/Retrieve/v1.2/json3.ws?Key={request.Key}&Id={request.Id}");
+            var str = await response.Content.ReadAsStringAsync();
+            var validateAddressResponse = await getResult<GetAddressDetailsResponse>(response);
+
+            return validateAddressResponse;
+        }
+
         public async Task<List<ValidateAddressResponse>> ValidateAddress(ValidateAddressRequest request)
         {
             var jsonContent = JsonContent.Create(request);

@@ -13,6 +13,15 @@ namespace CheckAddressApp.Services.Api
             _apiKey = apiKey;
         }
 
+        public async Task<LookupAddressResponse> LookupAddress(LookupAddressRequest request)
+        {
+            var url = getLookupUrl(request);
+            var response = await _httpClient.GetAsync(url);
+            var result = await getResult<LookupAddressResponse>(response);
+
+            return result;
+        }
+
         public async Task<ValidateAddressResponse> ValidateAddress(ValidateAddressRequest request)
         {
             var url = getValidationUrl(request);
@@ -47,9 +56,19 @@ namespace CheckAddressApp.Services.Api
             GC.SuppressFinalize(this);
         }
 
+        private string getLookupUrl(LookupAddressRequest request)
+        {
+            var url = "https://lookup.search.hereapi.com/v1/lookup";
+
+            url += $"?apiKey={_apiKey}" +
+                $"&id={request.Id}";
+
+            return url;
+        }
+
         private string getValidationUrl(ValidateAddressRequest request)
         {
-            var url = "https://discover.search.hereapi.com/v1/geocode";
+            var url = "https://geocode.search.hereapi.com/v1/geocode";
 
             url += $"?apiKey={_apiKey}" +
                 $"&q={request.Q}" +
@@ -63,7 +82,7 @@ namespace CheckAddressApp.Services.Api
             var url = "https://autocomplete.search.hereapi.com/v1/autocomplete";
 
             url += $"?apiKey={_apiKey}" +
-                $"&q={request.Q}" +
+                $"&q={request.Q.Trim().Replace(' ', '+')}" +
                 (!string.IsNullOrEmpty(request.In) ? $"&in={request.In}" : "");
 
             return url;

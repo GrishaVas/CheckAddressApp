@@ -2,6 +2,6 @@
 {
     public class AutosuggestAddressResponse
     {
-        public List<AutocompleteAddressResponseItem> Items { get; set; }
+        public List<AutosuggestAddressResponseItem> Items { get; set; }
     }
 }

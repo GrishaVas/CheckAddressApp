@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace CheckAddressApp.Services
 {
-    public class LoqateService : IDisposable
+    public class LoqateService : BaseService, IDisposable
     {
         private LoqateAddressApiService _loqateAddressApiService;
         private IConfiguration _conf;
@@ -16,7 +16,19 @@ namespace CheckAddressApp.Services
             _conf = conf;
         }
 
-        public async Task<AutocompleteAddressResponse> AutocompleteAddress(string input, string countryCode)
+        public async Task<GetAddressDetailsResponse> GetAddressDetails(string placeId)
+        {
+            var getAddressDetailsRequest = new GetAddressDetailsRequest
+            {
+                Id = placeId,
+                Key = _conf["Loqate:ApiKey"]
+            };
+            var addressDetails = await _loqateAddressApiService.GetAddressDetails(getAddressDetailsRequest);
+
+            return addressDetails;
+        }
+
+        public async Task<IEnumerable<CheckAddressData>> AutocompleteAddress(string input, string countryCode)
         {
             var autocompleteAddressRequest = new AutocompleteAddressRequest
             {
@@ -25,24 +37,41 @@ namespace CheckAddressApp.Services
                 Origin = countryCode
             };
             var autocompleteAddressResponse = await _loqateAddressApiService.AutocompleteAddress(autocompleteAddressRequest);
+            var placeIds = autocompleteAddressResponse.Items.Select(i => i.Id);
+            var addressDetails = await Task.WhenAll(placeIds.Select(pId => GetAddressDetails(pId)));
+            var checkAddressDataList = addressDetails.Select(ad => new CheckAddressData
+            {
+                Address = ad.Items.FirstOrDefault().Label,
+                Fields = getFields(ad.Items.FirstOrDefault()).ToArray()
+            });
 
-            return autocompleteAddressResponse;
+            return checkAddressDataList;
         }
 
-        public async Task<List<ValidateAddressResponse>> ValidateAddress(StructuredInput input)
+        public async Task<IEnumerable<CheckAddressData>> ValidateAddress(StructuredInput input)
         {
             var request = getLoqateValidationAddress(input);
             var responses = await _loqateAddressApiService.ValidateAddress(request);
+            var checkAddressData = responses.FirstOrDefault().Matches.Select(m => new CheckAddressData
+            {
+                Address = m.Address,
+                Fields = getFields(m).ToArray()
+            });
 
-            return responses;
+            return checkAddressData;
         }
 
-        public async Task<List<ValidateAddressResponse>> ValidateAddress(string input, string coutryCode)
+        public async Task<IEnumerable<CheckAddressData>> ValidateAddress(string input, string coutryCode)
         {
             var request = getLoqateValidationAddress(input, coutryCode);
             var responses = await _loqateAddressApiService.ValidateAddress(request);
+            var checkAddressData = responses.FirstOrDefault().Matches.Select(m => new CheckAddressData
+            {
+                Address = m.Address,
+                Fields = getFields(m).ToArray()
+            });
 
-            return responses;
+            return checkAddressData;
         }
 
         public string GetMatchVerificationLavel(string AQI)

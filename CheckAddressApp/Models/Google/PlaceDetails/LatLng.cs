@@ -1,6 +1,6 @@
-﻿namespace CheckAddressApp.Models.Google
+﻿namespace CheckAddressApp.Models.Google.PlaceDetails
 {
-    public class AutocompleteAddressRequestOrigin
+    public class LatLng
     {
         public double Latitude { get; set; }
         public double Longitude { get; set; }

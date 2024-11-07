@@ -1,4 +1,4 @@
-﻿namespace CheckAddressApp.Models.Google
+﻿namespace CheckAddressApp.Models.Google.Autocomplete
 {
     public class AutocompleteAddressResponseText
     {

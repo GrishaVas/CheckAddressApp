@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 
 namespace CheckAddressApp.Services.Api
 {
-    public class BaseApiService
+    public abstract class BaseApiService
     {
         protected async Task<TResult> getResult<TResult>(HttpResponseMessage response)
         {
