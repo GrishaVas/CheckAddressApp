@@ -16,6 +16,11 @@ namespace CheckAddressApp.Services
 
         public async Task<IEnumerable<CheckAddressData>> AutosuggestAddress(string input, string countryCode)
         {
+            if (!string.IsNullOrEmpty(countryCode) && countryCode.Length != 3)
+            {
+                throw new ArgumentException("Wrong country code.");
+            }
+
             var hereValidateRequest = new ValidateAddressRequest(input)
             {
                 In = countryCode
@@ -47,7 +52,7 @@ namespace CheckAddressApp.Services
 
         public async Task<IEnumerable<CheckAddressData>> AutocompleteAddress(string input, string countryCode)
         {
-            if (countryCode.Length != 3)
+            if (!string.IsNullOrEmpty(countryCode) && countryCode.Length != 3)
             {
                 throw new ArgumentException("Wrong country code.");
             }

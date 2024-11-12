@@ -20,6 +20,7 @@ namespace CheckAddressApp
         private IEnumerable<CheckAddressData> _hereAutosuggestResponse;
         private IEnumerable<CheckAddressData> _googleValidateResponse;
         private IEnumerable<CheckAddressData> _googleAutocompleteResponse;
+        private IEnumerable<InputFromFile> _inputsFromFile;
         private List<(string Name, string ISO2, string ISO3)> countries = new List<(string Name, string ISO2, string ISO3)>
         {
             {("United States","US","USA")},
@@ -62,6 +63,7 @@ namespace CheckAddressApp
             {("Austria","AT","AUT")},
             {("Argentina","AR","ARG")}
         };
+        private bool cleareSelectedFromFileInputAddressesListBox = true;
 
         public CheckAddressForm(IConfiguration conf)
         {
@@ -89,6 +91,8 @@ namespace CheckAddressApp
 
         private void clearGoogleResponse()
         {
+            _googleAutocompleteResponse = null;
+            _googleValidateResponse = null;
             googleResponseListBox.Items.Clear();
             googleResponseDataGridView.Rows.Clear();
         }
@@ -147,24 +151,20 @@ namespace CheckAddressApp
 
         private async Task loqateValidation(StructuredInput input)
         {
-            var response = await _loqateService.ValidateAddress(input);
+            _loqateValidateResponse = await _loqateService.ValidateAddress(input);
 
-            setLoqateOutput(response);
+            setLoqateOutput(_loqateValidateResponse);
         }
 
         private async Task loqateValidation(string input, string countryCode)
         {
-            var response = await _loqateService.ValidateAddress(input, countryCode);
+            _loqateValidateResponse = await _loqateService.ValidateAddress(input, countryCode);
 
-            setLoqateOutput(response);
+            setLoqateOutput(_loqateValidateResponse);
         }
 
         private void setLoqateOutput(IEnumerable<CheckAddressData> response)
         {
-            clearLoqateResponse();
-
-            _loqateValidateResponse = response;
-
             var addresses = response.Select(cad => cad.Address);
 
             if (addresses != null || addresses.Count() > 0)
@@ -189,8 +189,6 @@ namespace CheckAddressApp
 
         private void setGoogleOutput(IEnumerable<CheckAddressData> response)
         {
-            clearGoogleResponse();
-
             var addresses = response.Select(cad => cad.Address);
 
             googleResponseListBox.Items.AddRange(addresses.ToArray());
@@ -198,8 +196,6 @@ namespace CheckAddressApp
 
         private void smartyValidation(string input, string countryCode)
         {
-            clearSmartyResponse();
-
             if (string.IsNullOrEmpty(countryCode))
             {
                 smartyCountryCodeErrorProvider.SetError(countryTextBox, "The Country Code required for smarty API.");
@@ -213,8 +209,6 @@ namespace CheckAddressApp
 
         private void smartyValidation(StructuredInput input)
         {
-            clearSmartyResponse();
-
             if (string.IsNullOrEmpty(input.CountryCode2))
             {
                 smartyCountryCodeErrorProvider.SetError(countryTextBox, "The Country Code required for smarty API.");
@@ -235,23 +229,20 @@ namespace CheckAddressApp
 
         private async Task hereValidation(string input, string countryCode)
         {
-            var validateAddresResponse = await _hereService.ValidateAddress(input, countryCode);
+            _hereValidateResponse = await _hereService.ValidateAddress(input, countryCode);
 
-            setHereOutput(validateAddresResponse);
+            setHereOutput(_hereValidateResponse);
         }
 
         private async Task hereValidation(StructuredInput input)
         {
-            var validateAddresResponse = await _hereService.ValidateAddress(input);
+            _hereValidateResponse = await _hereService.ValidateAddress(input);
 
-            setHereOutput(validateAddresResponse);
+            setHereOutput(_hereValidateResponse);
         }
 
         private void setHereOutput(IEnumerable<CheckAddressData> response)
         {
-            clearHereResponse();
-            _hereValidateResponse = response;
-
             var addresses = response.Select(cad => cad.Address);
 
             hereResponseListBox.Items.AddRange(addresses.ToArray());
@@ -259,8 +250,6 @@ namespace CheckAddressApp
 
         private async Task loqateAutocomplete(string input, string countryCode)
         {
-            clearLoqateResponse();
-
             _loqateAutocompleteResponse = await _loqateService.AutocompleteAddress(input, countryCode);
             var suggestions = _loqateAutocompleteResponse.Select(cad => cad.Address);
 
@@ -272,8 +261,6 @@ namespace CheckAddressApp
 
         private async Task googleAutocomplete(string input, string countryCode)
         {
-            clearGoogleResponse();
-
             _googleAutocompleteResponse = await _googleService.AutocompleteAddress(input, countryCode);
             var suggestions = _googleAutocompleteResponse.Select(cad => cad.Address);
 
@@ -285,8 +272,6 @@ namespace CheckAddressApp
 
         private void smartyAutocomplete(string input, string countryCode)
         {
-            clearSmartyResponse();
-
             if (string.IsNullOrEmpty(countryCode))
             {
                 smartyCountryCodeErrorProvider.SetError(countryTextBox, "The Country Code required for Smarty Provider.");
@@ -302,8 +287,6 @@ namespace CheckAddressApp
 
         private async Task hereAutocomplete(string input, string countryCode)
         {
-            clearHereResponse();
-
             _hereAutocompleteResponse = await _hereService.AutocompleteAddress(input, countryCode);
             var suggestions = _hereAutocompleteResponse.Select(cad => cad.Address);
 
@@ -315,28 +298,10 @@ namespace CheckAddressApp
 
         private async Task hereAutosuggest(string input, string countryCode)
         {
-            clearHereResponse();
-
             _hereAutosuggestResponse = await _hereService.AutosuggestAddress(input, countryCode);
             var suggestions = _hereAutosuggestResponse.Select(cad => cad.Address);
 
             hereResponseListBox.Items.AddRange(suggestions.ToArray());
-        }
-
-        private IEnumerable<(string Field, string Value)> getMatchsRows(object match)
-        {
-            if (match == null)
-            {
-                return [];
-            }
-
-            var rows = match.GetType().GetProperties().Where(p => p.PropertyType.IsValueType || p.PropertyType == typeof(string)).Select(p =>
-                    (
-                        Field: p.Name,
-                        Value: p.GetValue(match)?.ToString()
-                    )).Where(r => !string.IsNullOrEmpty(r.Value));
-
-            return rows;
         }
 
         private async Task autocomplete(string input)
@@ -347,21 +312,25 @@ namespace CheckAddressApp
 
             if (googleMapsCheckBox.Checked)
             {
+                clearGoogleResponse();
                 await googleAutocomplete(input, countryCodes.ISO2);
             }
 
             if (loqateCheckBox.Checked)
             {
+                clearLoqateResponse();
                 await loqateAutocomplete(input, countryCodes.ISO2);
             }
 
             if (smartyCheckBox.Checked)
             {
+                clearSmartyResponse();
                 smartyAutocomplete(input, countryCodes.ISO2);
             }
 
             if (hereCheckBox.Checked)
             {
+                clearHereResponse();
                 await hereAutocomplete(input, countryCodes.ISO3);
             }
         }
@@ -379,6 +348,7 @@ namespace CheckAddressApp
 
             if (hereCheckBox.Checked && !googleMapsCheckBox.Checked && !loqateCheckBox.Checked && !smartyCheckBox.Checked)
             {
+                clearHereResponse();
                 await hereAutosuggest(input, countryCodes.ISO3);
             }
             else
@@ -386,7 +356,7 @@ namespace CheckAddressApp
                 inputErrorProvider.SetError(autocompleteAutosuggestSplitButton, "Api does not support autosuggest");
             }
         }
-        private async Task outocompleteAutosuggest()
+        private async Task autocompleteAutosuggest()
         {
             var selectedInputType = inputsChoiceTabControl.SelectedTab.Text;
             string input;
@@ -428,21 +398,25 @@ namespace CheckAddressApp
         {
             if (googleMapsCheckBox.Checked)
             {
+                clearGoogleResponse();
                 await googleValidation(input);
             }
 
             if (loqateCheckBox.Checked)
             {
+                clearLoqateResponse();
                 await loqateValidation(input);
             }
 
             if (smartyCheckBox.Checked)
             {
+                clearSmartyResponse();
                 smartyValidation(input);
             }
 
             if (hereCheckBox.Checked)
             {
+                clearHereResponse();
                 await hereValidation(input);
             }
         }
@@ -453,21 +427,25 @@ namespace CheckAddressApp
 
             if (googleMapsCheckBox.Checked)
             {
+                clearGoogleResponse();
                 await googleValidation(input, countryCodes.ISO2);
             }
 
             if (loqateCheckBox.Checked)
             {
+                clearLoqateResponse();
                 await loqateValidation(input, countryCodes.ISO2);
             }
 
             if (smartyCheckBox.Checked)
             {
+                clearSmartyResponse();
                 smartyValidation(input, countryCodes.ISO2);
             }
 
             if (hereCheckBox.Checked)
             {
+                clearHereResponse();
                 await hereValidation(input, countryCodes.ISO3);
             }
         }
@@ -583,7 +561,7 @@ namespace CheckAddressApp
             {
                 this.Cursor = Cursors.WaitCursor;
 
-                await outocompleteAutosuggest();
+                await autocompleteAutosuggest();
             }
             catch (Exception ex)
             {
@@ -745,21 +723,25 @@ namespace CheckAddressApp
         private void addressTextBox_TextChanged(object sender, EventArgs e)
         {
             inputErrorProvider.SetError(inputsChoiceTabControl, "");
+            fromFileInputAddressesListBoxCleareSelected();
         }
 
         private void cityTextBox_TextChanged(object sender, EventArgs e)
         {
             inputErrorProvider.SetError(inputsChoiceTabControl, "");
+            fromFileInputAddressesListBoxCleareSelected();
         }
 
         private void districtTextBox_TextChanged(object sender, EventArgs e)
         {
             inputErrorProvider.SetError(inputsChoiceTabControl, "");
+            fromFileInputAddressesListBoxCleareSelected();
         }
 
         private void postalCodeTextBox_TextChanged(object sender, EventArgs e)
         {
             inputErrorProvider.SetError(inputsChoiceTabControl, "");
+            fromFileInputAddressesListBoxCleareSelected();
         }
 
         private void googleMapsCheckBox_CheckedChanged(object sender, EventArgs e)
@@ -905,6 +887,7 @@ namespace CheckAddressApp
         private void freeInputTextBox_TextChanged(object sender, EventArgs e)
         {
             inputErrorProvider.SetError(inputsChoiceTabControl, "");
+            fromFileInputAddressesListBoxCleareSelected();
         }
 
         private void button5_Click(object sender, EventArgs e)
@@ -924,6 +907,102 @@ namespace CheckAddressApp
         private void countryTextBox_TextChanged(object sender, EventArgs e)
         {
             smartyCountryCodeErrorProvider.SetError(countryTextBox, "");
+            fromFileInputAddressesListBoxCleareSelected();
+        }
+
+        private async void loadFromFileButton_Click(object sender, EventArgs e)
+        {
+            var inputFileOpenFileDialogResult = InputFileOpenFileDialog.ShowDialog();
+
+            if (inputFileOpenFileDialogResult == DialogResult.OK)
+            {
+                var stream = InputFileOpenFileDialog.OpenFile();
+                var inputFileStr = "";
+
+                using (var reader = new StreamReader(stream))
+                {
+                    inputFileStr = await reader.ReadToEndAsync();
+                }
+
+                _inputsFromFile = getInputsFromFile(inputFileStr);
+                var items = _inputsFromFile.Select(i => i.GetString());
+
+                fromFileInputAddressesListBox.Items.Clear();
+                fromFileInputAddressesListBox.Items.AddRange(items.ToArray());
+            }
+        }
+
+        private List<InputFromFile> getInputsFromFile(string inputFileStr)
+        {
+            var inputsFromFile = new List<InputFromFile>();
+            const string rowsSep = "\r\n";
+            const char wordsSep = ',';
+            var rows = inputFileStr.Split(rowsSep);
+            var propNames = rows[0].Split(wordsSep);
+
+            foreach (var row in rows.Skip(1))
+            {
+                var values = row.Split(wordsSep);
+                var inputFormFile = getInputFromFile(propNames, values);
+
+                inputsFromFile.Add(inputFormFile);
+            }
+
+            return inputsFromFile;
+        }
+
+        private InputFromFile getInputFromFile(string[] propNames, string[] values)
+        {
+            var inputFormFile = new InputFromFile();
+            var inputFormFileType = typeof(InputFromFile);
+            var inputFormFileProps = inputFormFileType.GetProperties();
+
+            for (int i = 0; i < propNames.Length; i++)
+            {
+                var prop = inputFormFileProps.FirstOrDefault(p => p.Name == propNames[i]);
+
+                if (prop != null)
+                {
+                    prop.SetValue(inputFormFile, values[i]);
+                }
+            }
+
+            return inputFormFile;
+        }
+
+        private void fromFileInputAddresseslistBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (fromFileInputAddressesListBox.SelectedItem != null)
+            {
+                var selectedTab = inputsChoiceTabControl.SelectedTab.Text;
+                var inputFromFile = _inputsFromFile.FirstOrDefault(i => i.GetString() == fromFileInputAddressesListBox.SelectedItem.ToString());
+
+                cleareSelectedFromFileInputAddressesListBox = false;
+
+                if (selectedTab == "Structured Input")
+                {
+                    streetAndHouseNumberTextBox.Text = inputFromFile?.StreetAndHouseNumber;
+                    postalCodeTextBox.Text = inputFromFile?.PostalCode;
+                    cityTextBox.Text = inputFromFile?.City;
+                    districtTextBox.Text = inputFromFile?.District;
+                    countryTextBox.Text = inputFromFile?.CountryCode;
+                }
+                else
+                {
+                    freeInputTextBox.Text = inputFromFile?.GetString(false);
+                    countryTextBox.Text = inputFromFile?.CountryCode;
+                }
+
+                cleareSelectedFromFileInputAddressesListBox = true;
+            }
+        }
+
+        private void fromFileInputAddressesListBoxCleareSelected()
+        {
+            if (cleareSelectedFromFileInputAddressesListBox)
+            {
+                fromFileInputAddressesListBox.ClearSelected();
+            }
         }
     }
 }

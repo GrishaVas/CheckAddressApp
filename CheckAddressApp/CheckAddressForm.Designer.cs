@@ -75,6 +75,9 @@
             dataGridViewTextBoxColumn6 = new DataGridViewTextBoxColumn();
             groupBox1 = new GroupBox();
             inputGroupBox = new GroupBox();
+            loadFromFileButton = new Button();
+            label5 = new Label();
+            fromFileInputAddressesListBox = new ListBox();
             countryTextBox = new TextBox();
             inputsChoiceTabControl = new TabControl();
             tabPage2 = new TabPage();
@@ -95,6 +98,7 @@
             inputErrorProvider = new ErrorProvider(components);
             apiChoiceErrorProvider = new ErrorProvider(components);
             smartyCountryCodeErrorProvider = new ErrorProvider(components);
+            InputFileOpenFileDialog = new OpenFileDialog();
             apiTabControl.SuspendLayout();
             googleMapsTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)googleResponseDataGridView).BeginInit();
@@ -205,7 +209,7 @@
             // 
             // button1
             // 
-            button1.Location = new Point(382, 397);
+            button1.Location = new Point(382, 403);
             button1.Name = "button1";
             button1.Size = new Size(94, 39);
             button1.TabIndex = 41;
@@ -245,7 +249,7 @@
             googleMapsTabPage.Location = new Point(4, 29);
             googleMapsTabPage.Name = "googleMapsTabPage";
             googleMapsTabPage.Padding = new Padding(3);
-            googleMapsTabPage.Size = new Size(1496, 452);
+            googleMapsTabPage.Size = new Size(1215, 452);
             googleMapsTabPage.TabIndex = 0;
             googleMapsTabPage.Text = "Google Maps";
             googleMapsTabPage.UseVisualStyleBackColor = true;
@@ -253,7 +257,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(6, 10);
+            label2.Location = new Point(6, 16);
             label2.Name = "label2";
             label2.Size = new Size(79, 20);
             label2.TabIndex = 89;
@@ -263,7 +267,7 @@
             // 
             googleResponseListBox.FormattingEnabled = true;
             googleResponseListBox.HorizontalScrollbar = true;
-            googleResponseListBox.Location = new Point(6, 33);
+            googleResponseListBox.Location = new Point(6, 39);
             googleResponseListBox.Name = "googleResponseListBox";
             googleResponseListBox.Size = new Size(470, 144);
             googleResponseListBox.TabIndex = 88;
@@ -272,7 +276,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(482, 10);
+            label4.Location = new Point(482, 16);
             label4.Name = "label4";
             label4.Size = new Size(79, 20);
             label4.TabIndex = 87;
@@ -284,7 +288,7 @@
             googleResponseDataGridView.AllowUserToDeleteRows = false;
             googleResponseDataGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             googleResponseDataGridView.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn7, dataGridViewTextBoxColumn8 });
-            googleResponseDataGridView.Location = new Point(482, 33);
+            googleResponseDataGridView.Location = new Point(482, 39);
             googleResponseDataGridView.Name = "googleResponseDataGridView";
             googleResponseDataGridView.ReadOnly = true;
             googleResponseDataGridView.RowHeadersVisible = false;
@@ -320,7 +324,7 @@
             loqateTabPage.Location = new Point(4, 29);
             loqateTabPage.Name = "loqateTabPage";
             loqateTabPage.Padding = new Padding(3);
-            loqateTabPage.Size = new Size(1496, 452);
+            loqateTabPage.Size = new Size(1215, 452);
             loqateTabPage.TabIndex = 1;
             loqateTabPage.Text = "Loqate";
             loqateTabPage.UseVisualStyleBackColor = true;
@@ -489,7 +493,7 @@
             hereTabPage.Controls.Add(hereResponseDataGridView);
             hereTabPage.Location = new Point(4, 29);
             hereTabPage.Name = "hereTabPage";
-            hereTabPage.Size = new Size(1496, 452);
+            hereTabPage.Size = new Size(1215, 452);
             hereTabPage.TabIndex = 3;
             hereTabPage.Text = "Here";
             hereTabPage.UseVisualStyleBackColor = true;
@@ -576,6 +580,9 @@
             // 
             // inputGroupBox
             // 
+            inputGroupBox.Controls.Add(loadFromFileButton);
+            inputGroupBox.Controls.Add(label5);
+            inputGroupBox.Controls.Add(fromFileInputAddressesListBox);
             inputGroupBox.Controls.Add(countryTextBox);
             inputGroupBox.Controls.Add(inputsChoiceTabControl);
             inputGroupBox.Controls.Add(autocompleteAutosuggestSplitButton);
@@ -591,6 +598,35 @@
             inputGroupBox.TabIndex = 45;
             inputGroupBox.TabStop = false;
             inputGroupBox.Text = "Input";
+            // 
+            // loadFromFileButton
+            // 
+            loadFromFileButton.Location = new Point(972, 26);
+            loadFromFileButton.Name = "loadFromFileButton";
+            loadFromFileButton.Size = new Size(120, 39);
+            loadFromFileButton.TabIndex = 92;
+            loadFromFileButton.Text = "Load from File";
+            loadFromFileButton.UseVisualStyleBackColor = true;
+            loadFromFileButton.Click += loadFromFileButton_Click;
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Location = new Point(622, 72);
+            label5.Name = "label5";
+            label5.Size = new Size(139, 20);
+            label5.TabIndex = 91;
+            label5.Text = "Addresses from File";
+            // 
+            // fromFileInputAddressesListBox
+            // 
+            fromFileInputAddressesListBox.FormattingEnabled = true;
+            fromFileInputAddressesListBox.HorizontalScrollbar = true;
+            fromFileInputAddressesListBox.Location = new Point(622, 95);
+            fromFileInputAddressesListBox.Name = "fromFileInputAddressesListBox";
+            fromFileInputAddressesListBox.Size = new Size(470, 244);
+            fromFileInputAddressesListBox.TabIndex = 90;
+            fromFileInputAddressesListBox.SelectedIndexChanged += fromFileInputAddresseslistBox_SelectedIndexChanged;
             // 
             // countryTextBox
             // 
@@ -784,6 +820,10 @@
             // 
             smartyCountryCodeErrorProvider.ContainerControl = this;
             // 
+            // InputFileOpenFileDialog
+            // 
+            InputFileOpenFileDialog.Filter = "*.csv|*.csv";
+            // 
             // CheckAddressForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -940,5 +980,9 @@
         private DataGridView hereResponseDataGridView;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
+        private OpenFileDialog InputFileOpenFileDialog;
+        private Button loadFromFileButton;
+        private Label label5;
+        private ListBox fromFileInputAddressesListBox;
     }
 }

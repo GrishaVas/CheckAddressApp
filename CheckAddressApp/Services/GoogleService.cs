@@ -59,7 +59,7 @@ namespace CheckAddressApp.Services
             var checkAddressDataItem = new CheckAddressData
             {
                 Address = response.Result.Address.FormattedAddress,
-                Fields = getFields(response.Result.Address).ToArray()
+                Fields = getFields(response.Result).ToArray()
             };
             var checkAddressData = new List<CheckAddressData>
             {

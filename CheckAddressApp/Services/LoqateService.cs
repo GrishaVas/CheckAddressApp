@@ -37,8 +37,8 @@ namespace CheckAddressApp.Services
                 Origin = countryCode
             };
             var autocompleteAddressResponse = await _loqateAddressApiService.AutocompleteAddress(autocompleteAddressRequest);
-            var placeIds = autocompleteAddressResponse.Items.Select(i => i.Id);
-            var addressDetails = await Task.WhenAll(placeIds.Select(pId => GetAddressDetails(pId)));
+            var placeIds = await getAddressIds(autocompleteAddressResponse);
+            var addressDetails = await Task.WhenAll(placeIds.Take(5).Select(pId => GetAddressDetails(pId)));
             var checkAddressDataList = addressDetails.Select(ad => new CheckAddressData
             {
                 Address = ad.Items.FirstOrDefault().Label,
@@ -52,7 +52,7 @@ namespace CheckAddressApp.Services
         {
             var request = getLoqateValidationAddress(input);
             var responses = await _loqateAddressApiService.ValidateAddress(request);
-            var checkAddressData = responses.FirstOrDefault().Matches.Select(m => new CheckAddressData
+            var checkAddressData = responses.FirstOrDefault().Matches.Where(m => !string.IsNullOrEmpty(m.Address)).Select(m => new CheckAddressData
             {
                 Address = m.Address,
                 Fields = getFields(m).ToArray()
@@ -91,6 +91,33 @@ namespace CheckAddressApp.Services
                 default:
                     return "Bad";
             }
+        }
+
+        private async Task<List<string>> getAddressIds(AutocompleteAddressResponse response)
+        {
+            var resultIds = new List<string>();
+
+            foreach (var item in response.Items)
+            {
+                if (item.Type != "Address")
+                {
+                    var autocompleteAddressRequest = new AutocompleteAddressRequest
+                    {
+                        Container = item.Id,
+                        Key = _conf["Loqate:ApiKey"]
+                    };
+                    var autocompleteContainerResponse = await _loqateAddressApiService.AutocompleteAddress(autocompleteAddressRequest);
+                    var id = autocompleteContainerResponse.Items.First().Id;
+
+                    resultIds.Add(id);
+                }
+                else
+                {
+                    resultIds.Add(item.Id);
+                }
+            }
+
+            return resultIds;
         }
 
         private ValidateAddressRequest getLoqateValidationAddress(StructuredInput input)

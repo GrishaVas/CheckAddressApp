@@ -17,7 +17,6 @@ namespace CheckAddressApp.Services.Api
         public async Task<GetAddressDetailsResponse> GetAddressDetails(GetAddressDetailsRequest request)
         {
             var response = await _httpClient.GetAsync($"Capture/Interactive/Retrieve/v1.2/json3.ws?Key={request.Key}&Id={request.Id}");
-            var str = await response.Content.ReadAsStringAsync();
             var validateAddressResponse = await getResult<GetAddressDetailsResponse>(response);
 
             return validateAddressResponse;
@@ -57,6 +56,7 @@ namespace CheckAddressApp.Services.Api
         {
             url += $"?Key={System.Web.HttpUtility.UrlEncode(request.Key)}";
             url += $"&Text={System.Web.HttpUtility.UrlEncode(request.Text)}";
+            url += $"&Container={System.Web.HttpUtility.UrlEncode(request.Container)}";
             url += $"&Origin={System.Web.HttpUtility.UrlEncode(request.Origin)}";
 
             return url;
