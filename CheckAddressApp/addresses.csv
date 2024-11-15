@@ -1,0 +1,15 @@
+StreetAndHouseNumber,City,District,PostalCode,CountryCode
+Offenbachstr. 45,Munchen,,,Germany
+Offenbachstr,Munchen,,,Germany
+Calle Colmenarejo 5,Madrid,,28035,Spain
+Colmenarejo 5,Madrid,,28035,Spain
+Comenareho 5,Madrid,,28035,Spain
+Via San Martino della Battaglia 4,Roma,,,Italy
+Via della Vetrina 14,Roma,,00186,Italy
+Rua Júlio Siqueira 803,Fortaleza,,60135-226,Brazil
+Rua Júlio Siqueira 803,Fortaleza,,,Brazil
+,,,90048,United States
+6222 Wils,Los Angeles,,90048,United States
+16 E 46th Street,New York,,10017,United States
+Park Lane,Liverpool,,,United Kingdom
+46 Russell St,Cambridge,,CB2 1HT,United Kingdom

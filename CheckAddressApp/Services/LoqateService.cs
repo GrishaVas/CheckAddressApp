@@ -8,12 +8,19 @@ namespace CheckAddressApp.Services
     public class LoqateService : BaseService, IDisposable
     {
         private LoqateAddressApiService _loqateAddressApiService;
-        private IConfiguration _conf;
+        private string _apiKey;
 
         public LoqateService(IConfiguration conf)
         {
             _loqateAddressApiService = new LoqateAddressApiService();
-            _conf = conf;
+            _apiKey = conf["Loqate:ApiKey"];
+        }
+
+        public void Dispose()
+        {
+            _loqateAddressApiService.Dispose();
+
+            GC.SuppressFinalize(this);
         }
 
         public async Task<GetAddressDetailsResponse> GetAddressDetails(string placeId)
@@ -21,7 +28,7 @@ namespace CheckAddressApp.Services
             var getAddressDetailsRequest = new GetAddressDetailsRequest
             {
                 Id = placeId,
-                Key = _conf["Loqate:ApiKey"]
+                Key = _apiKey
             };
             var addressDetails = await _loqateAddressApiService.GetAddressDetails(getAddressDetailsRequest);
 
@@ -30,13 +37,24 @@ namespace CheckAddressApp.Services
 
         public async Task<IEnumerable<CheckAddressData>> AutocompleteAddress(string input, string countryCode)
         {
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
+
             var autocompleteAddressRequest = new AutocompleteAddressRequest
             {
-                Key = _conf["Loqate:ApiKey"],
+                Key = _apiKey,
                 Text = input,
                 Origin = countryCode
             };
             var autocompleteAddressResponse = await _loqateAddressApiService.AutocompleteAddress(autocompleteAddressRequest);
+
+            if (autocompleteAddressResponse == null)
+            {
+                throw new Exception("Autocomplete address response is null.");
+            }
+
             var placeIds = await getAddressIds(autocompleteAddressResponse);
             var addressDetails = await Task.WhenAll(placeIds.Take(5).Select(pId => GetAddressDetails(pId)));
             var checkAddressDataList = addressDetails.Select(ad => new CheckAddressData
@@ -50,47 +68,38 @@ namespace CheckAddressApp.Services
 
         public async Task<IEnumerable<CheckAddressData>> ValidateAddress(StructuredInput input)
         {
+            if (input == null)
+            {
+                throw new ArgumentException("StruvturedInput cannot be null.");
+            }
+
             var request = getLoqateValidationAddress(input);
             var responses = await _loqateAddressApiService.ValidateAddress(request);
-            var checkAddressData = responses.FirstOrDefault().Matches.Where(m => !string.IsNullOrEmpty(m.Address)).Select(m => new CheckAddressData
+            var checkAddressData = responses.FirstOrDefault()?.Matches?.Where(m => !string.IsNullOrEmpty(m.Address)).Select(m => new CheckAddressData
             {
                 Address = m.Address,
                 Fields = getFields(m).ToArray()
-            });
+            }) ?? [];
 
             return checkAddressData;
         }
 
         public async Task<IEnumerable<CheckAddressData>> ValidateAddress(string input, string coutryCode)
         {
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
+
             var request = getLoqateValidationAddress(input, coutryCode);
             var responses = await _loqateAddressApiService.ValidateAddress(request);
-            var checkAddressData = responses.FirstOrDefault().Matches.Select(m => new CheckAddressData
+            var checkAddressData = responses.FirstOrDefault()?.Matches?.Select(m => new CheckAddressData
             {
                 Address = m.Address,
                 Fields = getFields(m).ToArray()
-            });
+            }) ?? [];
 
             return checkAddressData;
-        }
-
-        public string GetMatchVerificationLavel(string AQI)
-        {
-            switch (AQI)
-            {
-                case "A":
-                    return "Excellent";
-                case "B":
-                    return "Good";
-                case "C":
-                    return "Average";
-                case "D":
-                    return "Poor";
-                case "E":
-                    return "Bad";
-                default:
-                    return "Bad";
-            }
         }
 
         private async Task<List<string>> getAddressIds(AutocompleteAddressResponse response)
@@ -104,7 +113,7 @@ namespace CheckAddressApp.Services
                     var autocompleteAddressRequest = new AutocompleteAddressRequest
                     {
                         Container = item.Id,
-                        Key = _conf["Loqate:ApiKey"]
+                        Key = _apiKey
                     };
                     var autocompleteContainerResponse = await _loqateAddressApiService.AutocompleteAddress(autocompleteAddressRequest);
                     var id = autocompleteContainerResponse.Items.First().Id;
@@ -124,7 +133,7 @@ namespace CheckAddressApp.Services
         {
             var request = new ValidateAddressRequest
             {
-                Key = _conf["Loqate:ApiKey"],
+                Key = _apiKey,
                 Addresses = new List<ValidateAddressRequestAddress>
                 {
                     new ValidateAddressRequestAddress
@@ -146,7 +155,7 @@ namespace CheckAddressApp.Services
         {
             var request = new ValidateAddressRequest
             {
-                Key = _conf["Loqate:ApiKey"],
+                Key = _apiKey,
                 Addresses = new List<ValidateAddressRequestAddress>
                 {
                     new ValidateAddressRequestAddress
@@ -158,13 +167,6 @@ namespace CheckAddressApp.Services
             };
 
             return request;
-        }
-
-        public void Dispose()
-        {
-            _loqateAddressApiService.Dispose();
-
-            GC.SuppressFinalize(this);
         }
         ~LoqateService()
         {

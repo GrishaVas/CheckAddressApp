@@ -1,4 +1,6 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
 using CheckAddressApp.Models.Loqate;
 
 namespace CheckAddressApp.Services.Api
@@ -50,6 +52,33 @@ namespace CheckAddressApp.Services.Api
         ~LoqateAddressApiService()
         {
             _httpClient.Dispose();
+        }
+
+        protected override async Task<TResult> getResult<TResult>(HttpResponseMessage response)
+        {
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+                var contentAsString = await response.Content.ReadAsStringAsync();
+
+                throw new Exception($"Status code: {response.StatusCode}. Content: {contentAsString}");
+            }
+
+            TResult result;
+            var jsonString = await response.Content.ReadAsStringAsync();
+
+            try
+            {
+                result = JsonSerializer.Deserialize<TResult>(jsonString);
+            }
+            catch (Exception)
+            {
+                var error = JsonSerializer.Deserialize<ErrorResponse>(jsonString);
+
+                throw new Exception($"{error.Description}");
+            }
+
+
+            return result;
         }
 
         private string getAutocompleteUrl(string url, AutocompleteAddressRequest request)

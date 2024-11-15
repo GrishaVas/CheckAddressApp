@@ -29,12 +29,23 @@ namespace CheckAddressApp.Services
 
         public async Task<IEnumerable<CheckAddressData>> AutocompleteAddress(string input, string countryCode)
         {
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
+
             var autocompleteAddressRequest = new AutocompleteAddressRequest(input)
             {
                 RegionCode = countryCode
             };
             var autocompleteAddressResponse = await _googleAddressApiService.AutocompleteAddress(autocompleteAddressRequest);
-            var addressIds = autocompleteAddressResponse.Suggestions.Select(s => s.PlacePrediction.PlaceId);
+
+            if (autocompleteAddressResponse == null)
+            {
+                throw new Exception("Autocomplete address response is null.");
+            }
+
+            var addressIds = autocompleteAddressResponse.Suggestions?.Select(s => s.PlacePrediction.PlaceId) ?? [];
             var checkAddresData = new List<CheckAddressData>();
 
             foreach (var id in addressIds)
@@ -54,29 +65,43 @@ namespace CheckAddressApp.Services
 
         public async Task<IEnumerable<CheckAddressData>> ValidateAddress(string input, string countryCode)
         {
+            if (input == null)
+            {
+                throw new Exception("Input cannot be null.");
+            }
+
             var request = getGoogleValidationRequest(input, countryCode);
-            var response = await _googleAddressApiService.ValidateAddress(request);
-            var checkAddressDataItem = new CheckAddressData
-            {
-                Address = response.Result.Address.FormattedAddress,
-                Fields = getFields(response.Result).ToArray()
-            };
-            var checkAddressData = new List<CheckAddressData>
-            {
-                checkAddressDataItem
-            };
+            var validateAddressResponse = await _googleAddressApiService.ValidateAddress(request);
+            var checkAddressData = getCheckAddressData(validateAddressResponse);
 
             return checkAddressData;
         }
 
         public async Task<IEnumerable<CheckAddressData>> ValidateAddress(StructuredInput input)
         {
+            if (input == null)
+            {
+                throw new ArgumentException("SctructureInput cannot be null.");
+            }
+
             var request = getGoogleValidationRequest(input);
-            var response = await _googleAddressApiService.ValidateAddress(request);
+            var validateAddressResponse = await _googleAddressApiService.ValidateAddress(request);
+            var checkAddressData = getCheckAddressData(validateAddressResponse);
+
+            return checkAddressData;
+        }
+
+        private List<CheckAddressData> getCheckAddressData(ValidateAddressResponse validateAddressResponse)
+        {
+            if (validateAddressResponse == null)
+            {
+                throw new Exception("Validate address response is null.");
+            }
+
             var checkAddressDataItem = new CheckAddressData
             {
-                Address = response.Result.Address.FormattedAddress,
-                Fields = getFields(response.Result).ToArray()
+                Address = validateAddressResponse.Result.Address.FormattedAddress,
+                Fields = getFields(validateAddressResponse.Result).ToArray()
             };
             var checkAddressData = new List<CheckAddressData>
             {

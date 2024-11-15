@@ -5,7 +5,7 @@ namespace CheckAddressApp.Services.Api
 {
     public abstract class BaseApiService
     {
-        protected async Task<TResult> getResult<TResult>(HttpResponseMessage response)
+        protected virtual async Task<TResult> getResult<TResult>(HttpResponseMessage response)
         {
             if (response.StatusCode != HttpStatusCode.OK)
             {

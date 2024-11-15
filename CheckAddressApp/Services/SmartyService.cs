@@ -17,13 +17,19 @@ namespace CheckAddressApp.Services
 
         public IEnumerable<CheckAddressData> AutocompleteAddress(string input, string countryCode)
         {
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
+
             if (countryCode == "US")
             {
                 var lookup = new SmartyStreets.USAutocompleteApi.Lookup(input);
 
                 _smartyAddressApiService.AutocompleteAddress(lookup);
+                var suggestions = lookup.Result ?? [];
 
-                var checkAddressData = lookup.Result.Select(s => new CheckAddressData
+                var checkAddressData = suggestions.Select(s => new CheckAddressData
                 {
                     Address = s.Text,
                     Fields = getFields(s).ToArray()
@@ -40,32 +46,13 @@ namespace CheckAddressApp.Services
 
                 _smartyAddressApiService.AutocompleteAddress(lookup);
 
-                var addressIds = lookup.Result.Select(s => s.AddressID);
-                var checkAddressData = lookup.Result.Select(c => new CheckAddressData
+                var candidats = lookup.Result ?? [];
+
+                var checkAddressData = candidats.Select(c => new CheckAddressData
                 {
                     Address = c.AddressText,
                     Fields = getFields(c).ToArray()
                 });
-
-                //foreach (var id in addressIds)
-                //{
-                //    var validateLookup = new SmartyStreets.InternationalStreetApi.Lookup
-                //    {
-                //        InputId = id,
-                //        Country = countryCode
-                //    };
-
-                //    _smartyAddressApiService.ValidateInternationalAddress(validateLookup);
-
-                //    var candidate = validateLookup.Result.FirstOrDefault();
-                //    var checkAddressDataItem = new CheckAddressData
-                //    {
-                //        Address = candidate?.Address1,
-                //        Fields = getMatchsRows(candidate).ToArray()
-                //    };
-
-                //    checkAddressData.Add(checkAddressDataItem);
-                //}
 
                 return checkAddressData;
             }
@@ -73,6 +60,11 @@ namespace CheckAddressApp.Services
 
         public IEnumerable<CheckAddressData> ValidateAddress(StructuredInput input)
         {
+            if (input == null)
+            {
+                throw new ArgumentException("StructuredInput cannot be null.");
+            }
+
             IEnumerable<CheckAddressData> checkAddressData;
 
             if (input.CountryCode2 == "US")
@@ -87,7 +79,9 @@ namespace CheckAddressApp.Services
 
                 _smartyAddressApiService.ValidateUSAddress(lookup);
 
-                checkAddressData = lookup.Result.Select(c => new CheckAddressData
+                var candidats = lookup.Result ?? [];
+
+                checkAddressData = candidats.Select(c => new CheckAddressData
                 {
                     Address = $"{c.DeliveryLine1} {c.DeliveryLine2} {c.LastLine}",
                     Fields = getFields(c).ToArray()
@@ -104,7 +98,9 @@ namespace CheckAddressApp.Services
                 };
                 _smartyAddressApiService.ValidateInternationalAddress(lookup);
 
-                checkAddressData = lookup.Result.Select(c => new CheckAddressData
+                var candidats = lookup.Result ?? [];
+
+                checkAddressData = candidats.Select(c => new CheckAddressData
                 {
                     Address = $"{c.Address1} {c.Address2} {c.Address3}",
                     Fields = getFields(c).ToArray()
@@ -116,6 +112,11 @@ namespace CheckAddressApp.Services
 
         public IEnumerable<CheckAddressData> ValidateAddress(string input, string countryCode)
         {
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
+
             IEnumerable<CheckAddressData> checkAddressData;
 
             if (countryCode == "US")
@@ -124,7 +125,9 @@ namespace CheckAddressApp.Services
 
                 _smartyAddressApiService.ValidateUSAddress(lookup);
 
-                checkAddressData = lookup.Result.Select(c => new CheckAddressData
+                var candidats = lookup.Result ?? [];
+
+                checkAddressData = candidats.Select(c => new CheckAddressData
                 {
                     Address = $"{c.DeliveryLine1} {c.DeliveryLine2} {c.LastLine}",
                     Fields = getFields(c).ToArray()
@@ -136,7 +139,9 @@ namespace CheckAddressApp.Services
 
                 _smartyAddressApiService.ValidateInternationalAddress(lookup);
 
-                checkAddressData = lookup.Result.Select(c => new CheckAddressData
+                var candidats = lookup.Result ?? [];
+
+                checkAddressData = candidats.Select(c => new CheckAddressData
                 {
                     Address = $"{c.Address1} {c.Address2} {c.Address3}",
                     Fields = getFields(c).ToArray()

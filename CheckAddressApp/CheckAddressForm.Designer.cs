@@ -43,6 +43,9 @@
             button2 = new Button();
             apiTabControl = new TabControl();
             googleMapsTabPage = new TabPage();
+            googleFileSaveLabel = new Label();
+            saveGoogleResultToFileButton = new Button();
+            saveAsGoogleResultToFileButton = new Button();
             label2 = new Label();
             googleResponseListBox = new ListBox();
             label4 = new Label();
@@ -50,6 +53,9 @@
             dataGridViewTextBoxColumn7 = new DataGridViewTextBoxColumn();
             dataGridViewTextBoxColumn8 = new DataGridViewTextBoxColumn();
             loqateTabPage = new TabPage();
+            loqateFileSaveLabel = new Label();
+            saveLoqateResultToFileButton = new Button();
+            saveAsLoqateResultToFileButton = new Button();
             button3 = new Button();
             label18 = new Label();
             loqateResponseDataGridView = new DataGridView();
@@ -58,6 +64,9 @@
             label43 = new Label();
             loqateResponseListBox = new ListBox();
             smartyTabPage = new TabPage();
+            smartyFileSaveLabel = new Label();
+            saveSmartyResultToFileButton = new Button();
+            saveAsSmartyResultToFileButton = new Button();
             smartyResponseDataGridView = new DataGridView();
             dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
             dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
@@ -66,6 +75,9 @@
             label11 = new Label();
             smartyResponseListBox = new ListBox();
             hereTabPage = new TabPage();
+            hereFileSaveLabel = new Label();
+            saveHereResultToFileButton = new Button();
+            saveAsHereResultToFileButton = new Button();
             button5 = new Button();
             label48 = new Label();
             hereResponseListBox = new ListBox();
@@ -75,7 +87,6 @@
             dataGridViewTextBoxColumn6 = new DataGridViewTextBoxColumn();
             groupBox1 = new GroupBox();
             inputGroupBox = new GroupBox();
-            loadFromFileButton = new Button();
             label5 = new Label();
             fromFileInputAddressesListBox = new ListBox();
             countryTextBox = new TextBox();
@@ -98,7 +109,9 @@
             inputErrorProvider = new ErrorProvider(components);
             apiChoiceErrorProvider = new ErrorProvider(components);
             smartyCountryCodeErrorProvider = new ErrorProvider(components);
-            InputFileOpenFileDialog = new OpenFileDialog();
+            saveResultSaveFileDialog = new SaveFileDialog();
+            autosuggestButton = new Button();
+            autocompleteButton = new Button();
             apiTabControl.SuspendLayout();
             googleMapsTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)googleResponseDataGridView).BeginInit();
@@ -139,7 +152,7 @@
             // 
             // checkButton
             // 
-            checkButton.Location = new Point(197, 296);
+            checkButton.Location = new Point(253, 300);
             checkButton.Name = "checkButton";
             checkButton.Size = new Size(95, 39);
             checkButton.TabIndex = 2;
@@ -219,7 +232,7 @@
             // 
             // button2
             // 
-            button2.Location = new Point(298, 296);
+            button2.Location = new Point(354, 300);
             button2.Name = "button2";
             button2.Size = new Size(95, 39);
             button2.TabIndex = 42;
@@ -241,6 +254,9 @@
             // 
             // googleMapsTabPage
             // 
+            googleMapsTabPage.Controls.Add(googleFileSaveLabel);
+            googleMapsTabPage.Controls.Add(saveGoogleResultToFileButton);
+            googleMapsTabPage.Controls.Add(saveAsGoogleResultToFileButton);
             googleMapsTabPage.Controls.Add(label2);
             googleMapsTabPage.Controls.Add(googleResponseListBox);
             googleMapsTabPage.Controls.Add(label4);
@@ -253,6 +269,36 @@
             googleMapsTabPage.TabIndex = 0;
             googleMapsTabPage.Text = "Google Maps";
             googleMapsTabPage.UseVisualStyleBackColor = true;
+            // 
+            // googleFileSaveLabel
+            // 
+            googleFileSaveLabel.AutoSize = true;
+            googleFileSaveLabel.Location = new Point(190, 412);
+            googleFileSaveLabel.Name = "googleFileSaveLabel";
+            googleFileSaveLabel.Size = new Size(78, 20);
+            googleFileSaveLabel.TabIndex = 95;
+            googleFileSaveLabel.Text = "Not Saved";
+            // 
+            // saveGoogleResultToFileButton
+            // 
+            saveGoogleResultToFileButton.Enabled = false;
+            saveGoogleResultToFileButton.Location = new Point(99, 403);
+            saveGoogleResultToFileButton.Name = "saveGoogleResultToFileButton";
+            saveGoogleResultToFileButton.Size = new Size(85, 39);
+            saveGoogleResultToFileButton.TabIndex = 91;
+            saveGoogleResultToFileButton.Text = "Save";
+            saveGoogleResultToFileButton.UseVisualStyleBackColor = true;
+            saveGoogleResultToFileButton.Click += saveGoogleResultToFileButton_Click;
+            // 
+            // saveAsGoogleResultToFileButton
+            // 
+            saveAsGoogleResultToFileButton.Location = new Point(6, 403);
+            saveAsGoogleResultToFileButton.Name = "saveAsGoogleResultToFileButton";
+            saveAsGoogleResultToFileButton.Size = new Size(85, 39);
+            saveAsGoogleResultToFileButton.TabIndex = 90;
+            saveAsGoogleResultToFileButton.Text = "Save as";
+            saveAsGoogleResultToFileButton.UseVisualStyleBackColor = true;
+            saveAsGoogleResultToFileButton.Click += saveAsGoogleResultToFileButton_Click;
             // 
             // label2
             // 
@@ -316,6 +362,9 @@
             // 
             // loqateTabPage
             // 
+            loqateTabPage.Controls.Add(loqateFileSaveLabel);
+            loqateTabPage.Controls.Add(saveLoqateResultToFileButton);
+            loqateTabPage.Controls.Add(saveAsLoqateResultToFileButton);
             loqateTabPage.Controls.Add(button3);
             loqateTabPage.Controls.Add(label18);
             loqateTabPage.Controls.Add(loqateResponseDataGridView);
@@ -328,6 +377,36 @@
             loqateTabPage.TabIndex = 1;
             loqateTabPage.Text = "Loqate";
             loqateTabPage.UseVisualStyleBackColor = true;
+            // 
+            // loqateFileSaveLabel
+            // 
+            loqateFileSaveLabel.AutoSize = true;
+            loqateFileSaveLabel.Location = new Point(190, 412);
+            loqateFileSaveLabel.Name = "loqateFileSaveLabel";
+            loqateFileSaveLabel.Size = new Size(78, 20);
+            loqateFileSaveLabel.TabIndex = 95;
+            loqateFileSaveLabel.Text = "Not Saved";
+            // 
+            // saveLoqateResultToFileButton
+            // 
+            saveLoqateResultToFileButton.Enabled = false;
+            saveLoqateResultToFileButton.Location = new Point(99, 403);
+            saveLoqateResultToFileButton.Name = "saveLoqateResultToFileButton";
+            saveLoqateResultToFileButton.Size = new Size(85, 39);
+            saveLoqateResultToFileButton.TabIndex = 93;
+            saveLoqateResultToFileButton.Text = "Save";
+            saveLoqateResultToFileButton.UseVisualStyleBackColor = true;
+            saveLoqateResultToFileButton.Click += saveLoqateResultToFileButton_Click;
+            // 
+            // saveAsLoqateResultToFileButton
+            // 
+            saveAsLoqateResultToFileButton.Location = new Point(6, 403);
+            saveAsLoqateResultToFileButton.Name = "saveAsLoqateResultToFileButton";
+            saveAsLoqateResultToFileButton.Size = new Size(85, 39);
+            saveAsLoqateResultToFileButton.TabIndex = 92;
+            saveAsLoqateResultToFileButton.Text = "Save as";
+            saveAsLoqateResultToFileButton.UseVisualStyleBackColor = true;
+            saveAsLoqateResultToFileButton.Click += saveAsLoqateResultToFileButton_Click;
             // 
             // button3
             // 
@@ -401,6 +480,9 @@
             // 
             // smartyTabPage
             // 
+            smartyTabPage.Controls.Add(smartyFileSaveLabel);
+            smartyTabPage.Controls.Add(saveSmartyResultToFileButton);
+            smartyTabPage.Controls.Add(saveAsSmartyResultToFileButton);
             smartyTabPage.Controls.Add(smartyResponseDataGridView);
             smartyTabPage.Controls.Add(button4);
             smartyTabPage.Controls.Add(label47);
@@ -413,6 +495,36 @@
             smartyTabPage.TabIndex = 2;
             smartyTabPage.Text = "Smarty";
             smartyTabPage.UseVisualStyleBackColor = true;
+            // 
+            // smartyFileSaveLabel
+            // 
+            smartyFileSaveLabel.AutoSize = true;
+            smartyFileSaveLabel.Location = new Point(190, 412);
+            smartyFileSaveLabel.Name = "smartyFileSaveLabel";
+            smartyFileSaveLabel.Size = new Size(78, 20);
+            smartyFileSaveLabel.TabIndex = 95;
+            smartyFileSaveLabel.Text = "Not Saved";
+            // 
+            // saveSmartyResultToFileButton
+            // 
+            saveSmartyResultToFileButton.Enabled = false;
+            saveSmartyResultToFileButton.Location = new Point(99, 403);
+            saveSmartyResultToFileButton.Name = "saveSmartyResultToFileButton";
+            saveSmartyResultToFileButton.Size = new Size(85, 39);
+            saveSmartyResultToFileButton.TabIndex = 93;
+            saveSmartyResultToFileButton.Text = "Save";
+            saveSmartyResultToFileButton.UseVisualStyleBackColor = true;
+            saveSmartyResultToFileButton.Click += saveSmartyResultToFileButton_Click;
+            // 
+            // saveAsSmartyResultToFileButton
+            // 
+            saveAsSmartyResultToFileButton.Location = new Point(6, 403);
+            saveAsSmartyResultToFileButton.Name = "saveAsSmartyResultToFileButton";
+            saveAsSmartyResultToFileButton.Size = new Size(85, 39);
+            saveAsSmartyResultToFileButton.TabIndex = 92;
+            saveAsSmartyResultToFileButton.Text = "Save as";
+            saveAsSmartyResultToFileButton.UseVisualStyleBackColor = true;
+            saveAsSmartyResultToFileButton.Click += saveAsSmartyResultToFileButton_Click;
             // 
             // smartyResponseDataGridView
             // 
@@ -486,6 +598,9 @@
             // 
             // hereTabPage
             // 
+            hereTabPage.Controls.Add(hereFileSaveLabel);
+            hereTabPage.Controls.Add(saveHereResultToFileButton);
+            hereTabPage.Controls.Add(saveAsHereResultToFileButton);
             hereTabPage.Controls.Add(button5);
             hereTabPage.Controls.Add(label48);
             hereTabPage.Controls.Add(hereResponseListBox);
@@ -497,6 +612,36 @@
             hereTabPage.TabIndex = 3;
             hereTabPage.Text = "Here";
             hereTabPage.UseVisualStyleBackColor = true;
+            // 
+            // hereFileSaveLabel
+            // 
+            hereFileSaveLabel.AutoSize = true;
+            hereFileSaveLabel.Location = new Point(190, 412);
+            hereFileSaveLabel.Name = "hereFileSaveLabel";
+            hereFileSaveLabel.Size = new Size(78, 20);
+            hereFileSaveLabel.TabIndex = 94;
+            hereFileSaveLabel.Text = "Not Saved";
+            // 
+            // saveHereResultToFileButton
+            // 
+            saveHereResultToFileButton.Enabled = false;
+            saveHereResultToFileButton.Location = new Point(99, 403);
+            saveHereResultToFileButton.Name = "saveHereResultToFileButton";
+            saveHereResultToFileButton.Size = new Size(85, 39);
+            saveHereResultToFileButton.TabIndex = 93;
+            saveHereResultToFileButton.Text = "Save";
+            saveHereResultToFileButton.UseVisualStyleBackColor = true;
+            saveHereResultToFileButton.Click += saveHereResultToFileButton_Click;
+            // 
+            // saveAsHereResultToFileButton
+            // 
+            saveAsHereResultToFileButton.Location = new Point(6, 403);
+            saveAsHereResultToFileButton.Name = "saveAsHereResultToFileButton";
+            saveAsHereResultToFileButton.Size = new Size(85, 39);
+            saveAsHereResultToFileButton.TabIndex = 92;
+            saveAsHereResultToFileButton.Text = "Save as";
+            saveAsHereResultToFileButton.UseVisualStyleBackColor = true;
+            saveAsHereResultToFileButton.Click += saveAsHereResultToFileButton_Click;
             // 
             // button5
             // 
@@ -580,7 +725,8 @@
             // 
             // inputGroupBox
             // 
-            inputGroupBox.Controls.Add(loadFromFileButton);
+            inputGroupBox.Controls.Add(autosuggestButton);
+            inputGroupBox.Controls.Add(autocompleteButton);
             inputGroupBox.Controls.Add(label5);
             inputGroupBox.Controls.Add(fromFileInputAddressesListBox);
             inputGroupBox.Controls.Add(countryTextBox);
@@ -598,16 +744,6 @@
             inputGroupBox.TabIndex = 45;
             inputGroupBox.TabStop = false;
             inputGroupBox.Text = "Input";
-            // 
-            // loadFromFileButton
-            // 
-            loadFromFileButton.Location = new Point(972, 26);
-            loadFromFileButton.Name = "loadFromFileButton";
-            loadFromFileButton.Size = new Size(120, 39);
-            loadFromFileButton.TabIndex = 92;
-            loadFromFileButton.Text = "Load from File";
-            loadFromFileButton.UseVisualStyleBackColor = true;
-            loadFromFileButton.Click += loadFromFileButton_Click;
             // 
             // label5
             // 
@@ -703,13 +839,15 @@
             // 
             autocompleteAutosuggestSplitButton.ContextMenuStrip = contextMenuStrip1;
             autocompleteAutosuggestSplitButton.DropDownButton = true;
+            autocompleteAutosuggestSplitButton.Enabled = false;
             inputErrorProvider.SetIconAlignment(autocompleteAutosuggestSplitButton, ErrorIconAlignment.MiddleLeft);
-            autocompleteAutosuggestSplitButton.Location = new Point(65, 296);
+            autocompleteAutosuggestSplitButton.Location = new Point(490, 300);
             autocompleteAutosuggestSplitButton.Name = "autocompleteAutosuggestSplitButton";
             autocompleteAutosuggestSplitButton.Size = new Size(126, 39);
             autocompleteAutosuggestSplitButton.TabIndex = 47;
             autocompleteAutosuggestSplitButton.Text = "Autocomplete";
             autocompleteAutosuggestSplitButton.UseVisualStyleBackColor = true;
+            autocompleteAutosuggestSplitButton.Visible = false;
             autocompleteAutosuggestSplitButton.Click += autocompleteAutosuggestSplitButton_Click;
             // 
             // contextMenuStrip1
@@ -798,8 +936,6 @@
             // googleMapsCheckBox
             // 
             googleMapsCheckBox.AutoSize = true;
-            googleMapsCheckBox.Checked = true;
-            googleMapsCheckBox.CheckState = CheckState.Checked;
             googleMapsCheckBox.Location = new Point(6, 26);
             googleMapsCheckBox.Name = "googleMapsCheckBox";
             googleMapsCheckBox.Size = new Size(120, 24);
@@ -820,9 +956,30 @@
             // 
             smartyCountryCodeErrorProvider.ContainerControl = this;
             // 
-            // InputFileOpenFileDialog
+            // saveResultSaveFileDialog
             // 
-            InputFileOpenFileDialog.Filter = "*.csv|*.csv";
+            saveResultSaveFileDialog.Filter = "*.txt | *.txt";
+            saveResultSaveFileDialog.OverwritePrompt = false;
+            // 
+            // autosuggestButton
+            // 
+            autosuggestButton.Location = new Point(139, 300);
+            autosuggestButton.Name = "autosuggestButton";
+            autosuggestButton.Size = new Size(108, 39);
+            autosuggestButton.TabIndex = 93;
+            autosuggestButton.Text = "Autosuggest";
+            autosuggestButton.UseVisualStyleBackColor = true;
+            autosuggestButton.Click += autosuggestButton_Click;
+            // 
+            // autocompleteButton
+            // 
+            autocompleteButton.Location = new Point(16, 300);
+            autocompleteButton.Name = "autocompleteButton";
+            autocompleteButton.Size = new Size(117, 39);
+            autocompleteButton.TabIndex = 92;
+            autocompleteButton.Text = "Autocomplete";
+            autocompleteButton.UseVisualStyleBackColor = true;
+            autocompleteButton.Click += autocompleteButton_Click;
             // 
             // CheckAddressForm
             // 
@@ -980,9 +1137,22 @@
         private DataGridView hereResponseDataGridView;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
-        private OpenFileDialog InputFileOpenFileDialog;
-        private Button loadFromFileButton;
         private Label label5;
         private ListBox fromFileInputAddressesListBox;
+        private Button saveAsGoogleResultToFileButton;
+        private SaveFileDialog saveResultSaveFileDialog;
+        private Button saveGoogleResultToFileButton;
+        private Button saveLoqateResultToFileButton;
+        private Button saveAsLoqateResultToFileButton;
+        private Button saveSmartyResultToFileButton;
+        private Button saveAsSmartyResultToFileButton;
+        private Button saveHereResultToFileButton;
+        private Button saveAsHereResultToFileButton;
+        private Label hereFileSaveLabel;
+        private Label googleFileSaveLabel;
+        private Label loqateFileSaveLabel;
+        private Label smartyFileSaveLabel;
+        private Button autosuggestButton;
+        private Button autocompleteButton;
     }
 }

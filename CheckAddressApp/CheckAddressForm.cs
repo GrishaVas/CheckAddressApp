@@ -64,6 +64,13 @@ namespace CheckAddressApp
             {("Argentina","AR","ARG")}
         };
         private bool cleareSelectedFromFileInputAddressesListBox = true;
+        private IConfiguration _conf;
+        private List<CheckBox> _apiCheckBoxes;
+        private const string _addressesInputFromFilePath = "addresses.csv";
+        private string _googleResultSaveFileName = null;
+        private string _loqateResultSaveFileName = null;
+        private string _hereResultSaveFileName = null;
+        private string _smartyResultSaveFileName = null;
 
         public CheckAddressForm(IConfiguration conf)
         {
@@ -72,8 +79,17 @@ namespace CheckAddressApp
             _loqateService = new LoqateService(conf);
             _hereService = new HereService(conf);
             _errorForm = new ErrorForm();
+            _conf = conf;
 
             InitializeComponent();
+
+            _apiCheckBoxes = new List<CheckBox>
+            {
+                googleMapsCheckBox,
+                hereCheckBox,
+                loqateCheckBox,
+                smartyCheckBox
+            };
         }
         ~CheckAddressForm()
         {
@@ -82,11 +98,45 @@ namespace CheckAddressApp
             _errorForm.Dispose();
         }
 
-        private int checkedApiChoicesCount()
+        private void showApi(IConfiguration conf)
         {
-            var count = apiGroupBox.Controls.OfType<CheckBox>().Where(cb => cb.Checked).Count();
+            var enableGoogle = bool.Parse(conf["Google:Enabled"] ?? "false");
+            var enableHere = bool.Parse(conf["Here:Enabled"] ?? "false");
+            var enableLoqate = bool.Parse(conf["Loqate:Enabled"] ?? "false");
+            var enableSmarty = bool.Parse(conf["Smarty:Enabled"] ?? "false");
 
-            return count;
+            googleMapsCheckBox.Enabled = enableGoogle;
+            hereCheckBox.Enabled = enableHere;
+            loqateCheckBox.Enabled = enableLoqate;
+            smartyCheckBox.Enabled = enableSmarty;
+
+            var firstCheckBox = _apiCheckBoxes.Where(ch => ch.Enabled).FirstOrDefault();
+
+            if (firstCheckBox != null)
+            {
+                firstCheckBox.Checked = true;
+            }
+        }
+
+        private async Task readInputAddressesFromFile()
+        {
+            if (File.Exists(_addressesInputFromFilePath))
+            {
+                var stream = File.OpenRead(_addressesInputFromFilePath);
+                var inputFileStr = "";
+
+                using (var reader = new StreamReader(stream))
+                {
+                    inputFileStr = await reader.ReadToEndAsync();
+                }
+
+                _inputsFromFile = getInputsFromFile(inputFileStr);
+
+                var items = _inputsFromFile.Select(i => i.GetString());
+
+                fromFileInputAddressesListBox.Items.Clear();
+                fromFileInputAddressesListBox.Items.AddRange(items.ToArray());
+            }
         }
 
         private void clearGoogleResponse()
@@ -314,24 +364,32 @@ namespace CheckAddressApp
             {
                 clearGoogleResponse();
                 await googleAutocomplete(input, countryCodes.ISO2);
+
+                googleFileSaveLabel.Text = "Not Saved";
             }
 
             if (loqateCheckBox.Checked)
             {
                 clearLoqateResponse();
                 await loqateAutocomplete(input, countryCodes.ISO2);
+
+                loqateFileSaveLabel.Text = "Not Saved";
             }
 
             if (smartyCheckBox.Checked)
             {
                 clearSmartyResponse();
                 smartyAutocomplete(input, countryCodes.ISO2);
+
+                smartyFileSaveLabel.Text = "Not Saved";
             }
 
             if (hereCheckBox.Checked)
             {
                 clearHereResponse();
                 await hereAutocomplete(input, countryCodes.ISO3);
+
+                hereFileSaveLabel.Text = "Not Saved";
             }
         }
 
@@ -350,6 +408,8 @@ namespace CheckAddressApp
             {
                 clearHereResponse();
                 await hereAutosuggest(input, countryCodes.ISO3);
+
+                hereFileSaveLabel.Text = "Not Saved";
             }
             else
             {
@@ -400,24 +460,32 @@ namespace CheckAddressApp
             {
                 clearGoogleResponse();
                 await googleValidation(input);
+
+                googleFileSaveLabel.Text = "Not Saved";
             }
 
             if (loqateCheckBox.Checked)
             {
                 clearLoqateResponse();
                 await loqateValidation(input);
+
+                loqateFileSaveLabel.Text = "Not Saved";
             }
 
             if (smartyCheckBox.Checked)
             {
                 clearSmartyResponse();
                 smartyValidation(input);
+
+                smartyFileSaveLabel.Text = "Not Saved";
             }
 
             if (hereCheckBox.Checked)
             {
                 clearHereResponse();
                 await hereValidation(input);
+
+                hereFileSaveLabel.Text = "Not Saved";
             }
         }
 
@@ -429,24 +497,32 @@ namespace CheckAddressApp
             {
                 clearGoogleResponse();
                 await googleValidation(input, countryCodes.ISO2);
+
+                googleFileSaveLabel.Text = "Not Saved";
             }
 
             if (loqateCheckBox.Checked)
             {
                 clearLoqateResponse();
                 await loqateValidation(input, countryCodes.ISO2);
+
+                loqateFileSaveLabel.Text = "Not Saved";
             }
 
             if (smartyCheckBox.Checked)
             {
                 clearSmartyResponse();
                 smartyValidation(input, countryCodes.ISO2);
+
+                smartyFileSaveLabel.Text = "Not Saved";
             }
 
             if (hereCheckBox.Checked)
             {
                 clearHereResponse();
                 await hereValidation(input, countryCodes.ISO3);
+
+                hereFileSaveLabel.Text = "Not Saved";
             }
         }
 
@@ -536,6 +612,79 @@ namespace CheckAddressApp
             {
                 errorRichTextBox.Text = $"Message: {ex.Message}\n" +
                     $"Stack trace: {ex.StackTrace}";
+            }
+        }
+
+        private List<InputFromFile> getInputsFromFile(string inputFileStr)
+        {
+            var inputsFromFile = new List<InputFromFile>();
+            const string rowsSep = "\r\n";
+            const char wordsSep = ',';
+            var rows = inputFileStr.Split(rowsSep);
+            var propNames = rows[0].Split(wordsSep);
+
+            foreach (var row in rows.Skip(1))
+            {
+                var values = row.Split(wordsSep);
+                var inputFormFile = getInputFromFile(propNames, values);
+
+                inputsFromFile.Add(inputFormFile);
+            }
+
+            return inputsFromFile;
+        }
+
+        private InputFromFile getInputFromFile(string[] propNames, string[] values)
+        {
+            var inputFormFile = new InputFromFile();
+            var inputFormFileType = typeof(InputFromFile);
+            var inputFormFileProps = inputFormFileType.GetProperties();
+
+            for (int i = 0; i < propNames.Length; i++)
+            {
+                var prop = inputFormFileProps.FirstOrDefault(p => p.Name == propNames[i]);
+
+                if (prop != null)
+                {
+                    prop.SetValue(inputFormFile, values[i]);
+                }
+            }
+
+            return inputFormFile;
+        }
+
+        private void fromFileInputAddresseslistBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (fromFileInputAddressesListBox.SelectedItem != null)
+            {
+                var selectedTab = inputsChoiceTabControl.SelectedTab.Text;
+                var inputFromFile = _inputsFromFile.FirstOrDefault(i => i.GetString() == fromFileInputAddressesListBox.SelectedItem.ToString());
+
+                cleareSelectedFromFileInputAddressesListBox = false;
+
+                if (selectedTab == "Structured Input")
+                {
+                    streetAndHouseNumberTextBox.Text = inputFromFile?.StreetAndHouseNumber;
+                    postalCodeTextBox.Text = inputFromFile?.PostalCode;
+                    cityTextBox.Text = inputFromFile?.City;
+                    districtTextBox.Text = inputFromFile?.District;
+                    countryTextBox.Text = inputFromFile?.CountryCode;
+                }
+                else
+                {
+                    freeInputTextBox.Text = inputFromFile?.GetString(false);
+                    countryTextBox.Text = inputFromFile?.CountryCode;
+                }
+
+                cleareSelectedFromFileInputAddressesListBox = true;
+            }
+        }
+
+        private void fromFileInputAddressesListBoxCleareSelected()
+        {
+            if (cleareSelectedFromFileInputAddressesListBox)
+            {
+                fromFileInputAddressesListBox.ClearSelected();
             }
         }
 
@@ -749,25 +898,26 @@ namespace CheckAddressApp
             apiChoiceErrorProvider.SetError(apiGroupBox, "");
             inputErrorProvider.SetError(autocompleteAutosuggestSplitButton, "");
 
-            var count = checkedApiChoicesCount();
-            if (count == 0)
-            {
-                googleMapsCheckBox.Checked = true;
-                apiChoiceErrorProvider.SetError(apiGroupBox, "At least one Check Provider should be checked!");
-
-                return;
-            }
-
             if (googleMapsCheckBox.Checked)
             {
-                if (count != 1)
+                if (!apiTabControl.TabPages.Contains(googleMapsTabPage))
                 {
                     apiTabControl.TabPages.Add(googleMapsTabPage);
                 }
             }
             else
             {
-                apiTabControl.TabPages.Remove(googleMapsTabPage);
+                var count = _apiCheckBoxes.Count(cb => cb.Checked);
+
+                if (count != 0)
+                {
+                    apiTabControl.TabPages.Remove(googleMapsTabPage);
+                }
+                else
+                {
+                    googleMapsCheckBox.Checked = true;
+                    apiChoiceErrorProvider.SetError(apiGroupBox, "At least one Check Provider should be checked!");
+                }
             }
         }
 
@@ -776,25 +926,26 @@ namespace CheckAddressApp
             apiChoiceErrorProvider.SetError(apiGroupBox, "");
             inputErrorProvider.SetError(autocompleteAutosuggestSplitButton, "");
 
-            var count = checkedApiChoicesCount();
-            if (count == 0)
-            {
-                loqateCheckBox.Checked = true;
-                apiChoiceErrorProvider.SetError(apiGroupBox, "At least one Check Provider should be checked!");
-
-                return;
-            }
-
             if (loqateCheckBox.Checked)
             {
-                if (count != 1)
+                if (!apiTabControl.TabPages.Contains(loqateTabPage))
                 {
                     apiTabControl.TabPages.Add(loqateTabPage);
                 }
             }
             else
             {
-                apiTabControl.TabPages.Remove(loqateTabPage);
+                var count = _apiCheckBoxes.Count(cb => cb.Checked);
+
+                if (count != 0)
+                {
+                    apiTabControl.TabPages.Remove(loqateTabPage);
+                }
+                else
+                {
+                    loqateCheckBox.Checked = true;
+                    apiChoiceErrorProvider.SetError(apiGroupBox, "At least one Check Provider should be checked!");
+                }
             }
         }
 
@@ -803,25 +954,26 @@ namespace CheckAddressApp
             apiChoiceErrorProvider.SetError(apiGroupBox, "");
             inputErrorProvider.SetError(autocompleteAutosuggestSplitButton, "");
 
-            var count = checkedApiChoicesCount();
-            if (count == 0)
-            {
-                smartyCheckBox.Checked = true;
-                apiChoiceErrorProvider.SetError(apiGroupBox, "At least one Check Provider should be checked!");
-
-                return;
-            }
-
             if (smartyCheckBox.Checked)
             {
-                if (count != 1)
+                if (!apiTabControl.TabPages.Contains(smartyTabPage))
                 {
                     apiTabControl.TabPages.Add(smartyTabPage);
                 }
             }
             else
             {
-                apiTabControl.TabPages.Remove(smartyTabPage);
+                var count = _apiCheckBoxes.Count(cb => cb.Checked);
+
+                if (count != 0)
+                {
+                    apiTabControl.TabPages.Remove(smartyTabPage);
+                }
+                else
+                {
+                    smartyCheckBox.Checked = true;
+                    apiChoiceErrorProvider.SetError(apiGroupBox, "At least one Check Provider should be checked!");
+                }
             }
         }
 
@@ -830,25 +982,26 @@ namespace CheckAddressApp
             apiChoiceErrorProvider.SetError(apiGroupBox, "");
             inputErrorProvider.SetError(autocompleteAutosuggestSplitButton, "");
 
-            var count = checkedApiChoicesCount();
-            if (count == 0)
-            {
-                hereCheckBox.Checked = true;
-                apiChoiceErrorProvider.SetError(apiGroupBox, "At least one Check Provider should be checked!");
-
-                return;
-            }
-
             if (hereCheckBox.Checked)
             {
-                if (count != 1)
+                if (!apiTabControl.TabPages.Contains(hereTabPage))
                 {
                     apiTabControl.TabPages.Add(hereTabPage);
                 }
             }
             else
             {
-                apiTabControl.TabPages.Remove(hereTabPage);
+                var count = _apiCheckBoxes.Count(cb => cb.Checked);
+
+                if (count != 0)
+                {
+                    apiTabControl.TabPages.Remove(hereTabPage);
+                }
+                else
+                {
+                    hereCheckBox.Checked = true;
+                    apiChoiceErrorProvider.SetError(apiGroupBox, "At least one Check Provider should be checked!");
+                }
             }
         }
 
@@ -895,13 +1048,17 @@ namespace CheckAddressApp
             clearHereResponse();
         }
 
-        private void CheckAddressForm_Load(object sender, EventArgs e)
+        private async void CheckAddressForm_Load(object sender, EventArgs e)
         {
             countryTextBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
 
+            apiTabControl.TabPages.Remove(googleMapsTabPage);
             apiTabControl.TabPages.Remove(loqateTabPage);
             apiTabControl.TabPages.Remove(smartyTabPage);
             apiTabControl.TabPages.Remove(hereTabPage);
+
+            showApi(_conf);
+            await readInputAddressesFromFile();
         }
 
         private void countryTextBox_TextChanged(object sender, EventArgs e)
@@ -910,99 +1067,257 @@ namespace CheckAddressApp
             fromFileInputAddressesListBoxCleareSelected();
         }
 
-        private async void loadFromFileButton_Click(object sender, EventArgs e)
+        private async Task<string> saveAsResponses(IEnumerable<CheckAddressData> validateResponse,
+            IEnumerable<CheckAddressData> autocompleteResponse,
+            IEnumerable<CheckAddressData> autosuggestResponse, string owner)
         {
-            var inputFileOpenFileDialogResult = InputFileOpenFileDialog.ShowDialog();
+            var result = saveResultSaveFileDialog.ShowDialog();
 
-            if (inputFileOpenFileDialogResult == DialogResult.OK)
+            if (result != DialogResult.OK)
             {
-                var stream = InputFileOpenFileDialog.OpenFile();
-                var inputFileStr = "";
+                return "";
+            }
 
-                using (var reader = new StreamReader(stream))
-                {
-                    inputFileStr = await reader.ReadToEndAsync();
-                }
+            var output = "";
 
-                _inputsFromFile = getInputsFromFile(inputFileStr);
-                var items = _inputsFromFile.Select(i => i.GetString());
+            if (_googleAutocompleteResponse != null || _googleValidateResponse != null)
+            {
+                output = getCheckAddressDataEnumerableOutputString(autocompleteResponse, $"{owner} Autocomplete");
+                output += getCheckAddressDataEnumerableOutputString(validateResponse, $"{owner} Validation");
+                output += getCheckAddressDataEnumerableOutputString(autosuggestResponse, $"{owner} Validation");
+            }
 
-                fromFileInputAddressesListBox.Items.Clear();
-                fromFileInputAddressesListBox.Items.AddRange(items.ToArray());
+            var stream = saveResultSaveFileDialog.OpenFile();
+
+            using (var streamWriter = new StreamWriter(stream))
+            {
+                await streamWriter.WriteAsync(output);
+            }
+
+            return saveResultSaveFileDialog.FileName;
+        }
+
+        private async Task saveResponses(IEnumerable<CheckAddressData> validateResponse,
+            IEnumerable<CheckAddressData> autocompleteResponse,
+            IEnumerable<CheckAddressData> autosuggestResponse, string owner, string fileName)
+        {
+            var output = "";
+
+            if (_googleAutocompleteResponse != null || _googleValidateResponse != null)
+            {
+                output = getCheckAddressDataEnumerableOutputString(autocompleteResponse, $"{owner} Autocomplete");
+                output += getCheckAddressDataEnumerableOutputString(validateResponse, $"{owner} Validation");
+                output += getCheckAddressDataEnumerableOutputString(autosuggestResponse, $"{owner} Validation");
+            }
+
+            File.AppendAllText(fileName, output);
+        }
+
+        private async void saveAsGoogleResultToFileButton_Click(object sender, EventArgs e)
+        {
+            var fileName = await saveAsResponses(_googleValidateResponse, _googleAutocompleteResponse, null, "GoogleApi");
+
+            if (string.IsNullOrEmpty(fileName))
+            {
+                return;
+            }
+
+            _googleResultSaveFileName = fileName;
+            saveGoogleResultToFileButton.Enabled = true;
+            googleFileSaveLabel.Text = "Saved";
+        }
+
+        private string getCheckAddressDataEnumerableOutputString(IEnumerable<CheckAddressData> checkAddressData, string owner)
+        {
+            if (checkAddressData == null)
+            {
+                return "";
+            }
+
+            var str = $"{DateTime.UtcNow} - {owner}:\r\n";
+
+            foreach (var address in checkAddressData)
+            {
+                var fields = address.Fields.Select(caf => $"       {caf.Name} : {caf.Value}\r\n");
+
+                str += $"    {address.Address}:\r\n" + string.Join(null, fields) + "\r\n";
+            }
+
+            str += "\r\n";
+
+            return str;
+        }
+
+        private async void saveGoogleResultToFileButton_Click(object sender, EventArgs e)
+        {
+            if (File.Exists(_googleResultSaveFileName))
+            {
+                await saveResponses(_googleValidateResponse, _googleAutocompleteResponse, null, "GoogleApi", _googleResultSaveFileName);
+                googleFileSaveLabel.Text = "Saved";
+            }
+            else
+            {
+                saveGoogleResultToFileButton.Enabled = false;
             }
         }
 
-        private List<InputFromFile> getInputsFromFile(string inputFileStr)
+        private async void saveAsLoqateResultToFileButton_Click(object sender, EventArgs e)
         {
-            var inputsFromFile = new List<InputFromFile>();
-            const string rowsSep = "\r\n";
-            const char wordsSep = ',';
-            var rows = inputFileStr.Split(rowsSep);
-            var propNames = rows[0].Split(wordsSep);
+            var fileName = await saveAsResponses(_loqateValidateResponse, _loqateAutocompleteResponse, null, "LoqateApi");
 
-            foreach (var row in rows.Skip(1))
+            if (string.IsNullOrEmpty(fileName))
             {
-                var values = row.Split(wordsSep);
-                var inputFormFile = getInputFromFile(propNames, values);
-
-                inputsFromFile.Add(inputFormFile);
+                return;
             }
 
-            return inputsFromFile;
+            _loqateResultSaveFileName = fileName;
+            saveLoqateResultToFileButton.Enabled = true;
+            loqateFileSaveLabel.Text = "Saved";
         }
-
-        private InputFromFile getInputFromFile(string[] propNames, string[] values)
+        private async void saveLoqateResultToFileButton_Click(object sender, EventArgs e)
         {
-            var inputFormFile = new InputFromFile();
-            var inputFormFileType = typeof(InputFromFile);
-            var inputFormFileProps = inputFormFileType.GetProperties();
-
-            for (int i = 0; i < propNames.Length; i++)
+            if (File.Exists(_loqateResultSaveFileName))
             {
-                var prop = inputFormFileProps.FirstOrDefault(p => p.Name == propNames[i]);
-
-                if (prop != null)
-                {
-                    prop.SetValue(inputFormFile, values[i]);
-                }
+                await saveResponses(_loqateValidateResponse, _loqateAutocompleteResponse, null, "LoqateApi", _loqateResultSaveFileName);
+                loqateFileSaveLabel.Text = "Saved";
             }
-
-            return inputFormFile;
-        }
-
-        private void fromFileInputAddresseslistBox_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (fromFileInputAddressesListBox.SelectedItem != null)
+            else
             {
-                var selectedTab = inputsChoiceTabControl.SelectedTab.Text;
-                var inputFromFile = _inputsFromFile.FirstOrDefault(i => i.GetString() == fromFileInputAddressesListBox.SelectedItem.ToString());
-
-                cleareSelectedFromFileInputAddressesListBox = false;
-
-                if (selectedTab == "Structured Input")
-                {
-                    streetAndHouseNumberTextBox.Text = inputFromFile?.StreetAndHouseNumber;
-                    postalCodeTextBox.Text = inputFromFile?.PostalCode;
-                    cityTextBox.Text = inputFromFile?.City;
-                    districtTextBox.Text = inputFromFile?.District;
-                    countryTextBox.Text = inputFromFile?.CountryCode;
-                }
-                else
-                {
-                    freeInputTextBox.Text = inputFromFile?.GetString(false);
-                    countryTextBox.Text = inputFromFile?.CountryCode;
-                }
-
-                cleareSelectedFromFileInputAddressesListBox = true;
+                saveLoqateResultToFileButton.Enabled = false;
             }
         }
 
-        private void fromFileInputAddressesListBoxCleareSelected()
+        private async void saveAsSmartyResultToFileButton_Click(object sender, EventArgs e)
         {
-            if (cleareSelectedFromFileInputAddressesListBox)
+            var fileName = await saveAsResponses(_smartyValidateResponse, _smartyAutocompleteResponse, null, "SmartyApi");
+
+            if (string.IsNullOrEmpty(fileName))
             {
-                fromFileInputAddressesListBox.ClearSelected();
+                return;
             }
+
+            _smartyResultSaveFileName = fileName;
+            saveSmartyResultToFileButton.Enabled = true;
+            smartyFileSaveLabel.Text = "Saved";
+        }
+
+        private async void saveSmartyResultToFileButton_Click(object sender, EventArgs e)
+        {
+            if (File.Exists(_smartyResultSaveFileName))
+            {
+                await saveResponses(_smartyValidateResponse, _smartyAutocompleteResponse, null, "SmartyApi", _smartyResultSaveFileName);
+                smartyFileSaveLabel.Text = "Saved";
+            }
+            else
+            {
+                saveSmartyResultToFileButton.Enabled = false;
+            }
+        }
+
+        private async void saveHereResultToFileButton_Click(object sender, EventArgs e)
+        {
+            if (File.Exists(_hereResultSaveFileName))
+            {
+                await saveResponses(_hereValidateResponse, _hereAutocompleteResponse, _hereAutosuggestResponse, "HereApi", _hereResultSaveFileName);
+
+                hereFileSaveLabel.Text = "Saved";
+            }
+            else
+            {
+                saveHereResultToFileButton.Enabled = false;
+            }
+        }
+
+        private async void saveAsHereResultToFileButton_Click(object sender, EventArgs e)
+        {
+            var fileName = await saveAsResponses(_hereValidateResponse, _hereAutocompleteResponse, _hereAutosuggestResponse, "HereApi");
+
+            if (string.IsNullOrEmpty(fileName))
+            {
+                return;
+            }
+
+            _hereResultSaveFileName = fileName;
+            saveHereResultToFileButton.Enabled = true;
+            hereFileSaveLabel.Text = "Saved";
+        }
+
+        private async void autosuggestButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                this.Cursor = Cursors.WaitCursor;
+
+                var input = getInputString();
+
+                if (input == null)
+                {
+                    return;
+                }
+
+                await autosuggest(input);
+            }
+            catch (Exception ex)
+            {
+                showError(ex);
+            }
+
+            this.Cursor = Cursors.Arrow;
+
+        }
+
+        private async void autocompleteButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                this.Cursor = Cursors.WaitCursor;
+
+                var input = getInputString();
+
+                if (input == null)
+                {
+                    return;
+                }
+
+                await autocomplete(input);
+            }
+            catch (Exception ex)
+            {
+                showError(ex);
+            }
+
+            this.Cursor = Cursors.Arrow;
+        }
+
+        private string getInputString()
+        {
+            var selectedInputType = inputsChoiceTabControl.SelectedTab.Text;
+            string input;
+
+            if (selectedInputType == "Structured Input")
+            {
+                input = getOneLineInput();
+
+                if (string.IsNullOrEmpty(input.Trim()))
+                {
+                    inputErrorProvider.SetError(inputsChoiceTabControl, "At least one input must be filled.");
+                    this.Cursor = Cursors.Arrow;
+                    return "";
+                }
+            }
+            else
+            {
+                input = freeInputTextBox.Text;
+
+                if (string.IsNullOrEmpty(input.Trim()))
+                {
+                    inputErrorProvider.SetError(inputsChoiceTabControl, "Address required.");
+                    this.Cursor = Cursors.Arrow;
+                    return "";
+                }
+            }
+
+            return input;
         }
     }
 }

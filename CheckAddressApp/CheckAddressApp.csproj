@@ -20,6 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="addresses.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="application_default_credentials.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
