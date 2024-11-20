@@ -15,116 +15,81 @@ namespace CheckAddressApp.Services
                 conf["Smarty:AuthToken"]);
         }
 
-        public IEnumerable<CheckAddressData> AutocompleteAddress(string input, string countryCode)
+        public override Task<ServiceData> AutocompleteAddress(CheckAddressInput input)
         {
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
+
+            var countryCode = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO2 : null;
+            IEnumerable<CheckAddressData> checkAddressData;
+
             if (countryCode == "US")
             {
-                var lookup = new SmartyStreets.USAutocompleteApi.Lookup(input);
+                var lookup = new SmartyStreets.USAutocompleteApi.Lookup(input.FreeInput);
 
                 _smartyAddressApiService.AutocompleteAddress(lookup);
+                var suggestions = lookup.Result ?? [];
 
-                var checkAddressData = lookup.Result.Select(s => new CheckAddressData
+                checkAddressData = suggestions.Select(s => new CheckAddressData
                 {
                     Address = s.Text,
                     Fields = getFields(s).ToArray()
                 });
-
-                return checkAddressData;
             }
             else
             {
-                var lookup = new SmartyStreets.InternationalAutocompleteApi.Lookup(input)
+                var lookup = new SmartyStreets.InternationalAutocompleteApi.Lookup(input.FreeInput)
                 {
                     Country = countryCode
                 };
 
                 _smartyAddressApiService.AutocompleteAddress(lookup);
 
-                var addressIds = lookup.Result.Select(s => s.AddressID);
-                var checkAddressData = lookup.Result.Select(c => new CheckAddressData
+                var candidats = lookup.Result ?? [];
+
+                checkAddressData = candidats.Select(c => new CheckAddressData
                 {
                     Address = c.AddressText,
                     Fields = getFields(c).ToArray()
                 });
-
-                //foreach (var id in addressIds)
-                //{
-                //    var validateLookup = new SmartyStreets.InternationalStreetApi.Lookup
-                //    {
-                //        InputId = id,
-                //        Country = countryCode
-                //    };
-
-                //    _smartyAddressApiService.ValidateInternationalAddress(validateLookup);
-
-                //    var candidate = validateLookup.Result.FirstOrDefault();
-                //    var checkAddressDataItem = new CheckAddressData
-                //    {
-                //        Address = candidate?.Address1,
-                //        Fields = getMatchsRows(candidate).ToArray()
-                //    };
-
-                //    checkAddressData.Add(checkAddressDataItem);
-                //}
-
-                return checkAddressData;
             }
+
+            var serviceData = new ServiceData
+            {
+                ServiceName = "SmartyService",
+                CheckAddressData = checkAddressData
+            };
+            var task = Task.FromResult(serviceData);
+
+            return task;
         }
 
-        public IEnumerable<CheckAddressData> ValidateAddress(StructuredInput input)
+        public override Task<ServiceData> AutosuggestAddress(CheckAddressInput input)
         {
-            IEnumerable<CheckAddressData> checkAddressData;
-
-            if (input.CountryCode2 == "US")
-            {
-                var lookup = new SmartyStreets.USStreetApi.Lookup(input.Input)
-                {
-                    ZipCode = input.PostalCode,
-                    City = input.City,
-                    Urbanization = input.District,
-                    Street2 = input.StreetAndHouseNumber,
-                };
-
-                _smartyAddressApiService.ValidateUSAddress(lookup);
-
-                checkAddressData = lookup.Result.Select(c => new CheckAddressData
-                {
-                    Address = $"{c.DeliveryLine1} {c.DeliveryLine2} {c.LastLine}",
-                    Fields = getFields(c).ToArray()
-                });
-            }
-            else
-            {
-                var lookup = new SmartyStreets.InternationalStreetApi.Lookup(input.Input, input.CountryCode2)
-                {
-                    PostalCode = input.PostalCode,
-                    Locality = input.City,
-                    Address1 = input.StreetAndHouseNumber,
-                    Address2 = input.District
-                };
-                _smartyAddressApiService.ValidateInternationalAddress(lookup);
-
-                checkAddressData = lookup.Result.Select(c => new CheckAddressData
-                {
-                    Address = $"{c.Address1} {c.Address2} {c.Address3}",
-                    Fields = getFields(c).ToArray()
-                });
-            }
-
-            return checkAddressData;
+            throw new NotImplementedException();
         }
 
-        public IEnumerable<CheckAddressData> ValidateAddress(string input, string countryCode)
+        public override Task<ServiceData> ValidateAddress(CheckAddressInput input)
         {
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
+
             IEnumerable<CheckAddressData> checkAddressData;
+            var countryCode = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO2 : null;
 
             if (countryCode == "US")
             {
-                var lookup = new SmartyStreets.USStreetApi.Lookup(input);
+                var lookup = getUSLookup(input);
 
                 _smartyAddressApiService.ValidateUSAddress(lookup);
 
-                checkAddressData = lookup.Result.Select(c => new CheckAddressData
+                var candidats = lookup.Result ?? [];
+
+                checkAddressData = candidats.Select(c => new CheckAddressData
                 {
                     Address = $"{c.DeliveryLine1} {c.DeliveryLine2} {c.LastLine}",
                     Fields = getFields(c).ToArray()
@@ -132,18 +97,66 @@ namespace CheckAddressApp.Services
             }
             else
             {
-                var lookup = new SmartyStreets.InternationalStreetApi.Lookup(input, countryCode);
-
+                var lookup = getInternationalLookup(input);
                 _smartyAddressApiService.ValidateInternationalAddress(lookup);
 
-                checkAddressData = lookup.Result.Select(c => new CheckAddressData
+                var candidats = lookup.Result ?? [];
+
+                checkAddressData = candidats.Select(c => new CheckAddressData
                 {
                     Address = $"{c.Address1} {c.Address2} {c.Address3}",
                     Fields = getFields(c).ToArray()
                 });
             }
 
-            return checkAddressData;
+            var serviceData = new ServiceData
+            {
+                ServiceName = "SmartyService",
+                CheckAddressData = checkAddressData
+            };
+            var task = Task.FromResult(serviceData);
+
+            return task;
+        }
+
+        private SmartyStreets.USStreetApi.Lookup getUSLookup(CheckAddressInput input)
+        {
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
+
+            var lookup = new SmartyStreets.USStreetApi.Lookup(input.FreeInput);
+
+            if (input.StructuredInput != null)
+            {
+                lookup.ZipCode = input.StructuredInput.PostalCode;
+                lookup.City = input.StructuredInput.City;
+                lookup.Urbanization = input.StructuredInput.District;
+                lookup.Street2 = input.StructuredInput.StreetAndHouseNumber;
+            }
+
+            return lookup;
+        }
+        private SmartyStreets.InternationalStreetApi.Lookup getInternationalLookup(CheckAddressInput input)
+        {
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
+
+            var countryCode = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO2 : null;
+            var lookup = new SmartyStreets.InternationalStreetApi.Lookup(input.FreeInput, countryCode);
+
+            if (input.StructuredInput != null)
+            {
+                lookup.PostalCode = input.StructuredInput.PostalCode;
+                lookup.Locality = input.StructuredInput.City;
+                lookup.Address2 = input.StructuredInput.District;
+                lookup.Address1 = input.StructuredInput.StreetAndHouseNumber;
+            }
+
+            return lookup;
         }
 
         private IEnumerable<CheckAddressField> getFields(SmartyStreets.InternationalStreetApi.Candidate candidate)

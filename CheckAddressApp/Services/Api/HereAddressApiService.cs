@@ -2,7 +2,7 @@
 
 namespace CheckAddressApp.Services.Api
 {
-    public class HereAddressApiService : BaseApiService, IDisposable
+    public class HereAddressApiService : BaseAddressApiService, IDisposable
     {
         private HttpClient _httpClient;
         private string _apiKey;

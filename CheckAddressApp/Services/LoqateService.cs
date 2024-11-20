@@ -8,12 +8,19 @@ namespace CheckAddressApp.Services
     public class LoqateService : BaseService, IDisposable
     {
         private LoqateAddressApiService _loqateAddressApiService;
-        private IConfiguration _conf;
+        private string _apiKey;
 
         public LoqateService(IConfiguration conf)
         {
             _loqateAddressApiService = new LoqateAddressApiService();
-            _conf = conf;
+            _apiKey = conf["Loqate:ApiKey"];
+        }
+
+        public void Dispose()
+        {
+            _loqateAddressApiService.Dispose();
+
+            GC.SuppressFinalize(this);
         }
 
         public async Task<GetAddressDetailsResponse> GetAddressDetails(string placeId)
@@ -21,76 +28,11 @@ namespace CheckAddressApp.Services
             var getAddressDetailsRequest = new GetAddressDetailsRequest
             {
                 Id = placeId,
-                Key = _conf["Loqate:ApiKey"]
+                Key = _apiKey
             };
             var addressDetails = await _loqateAddressApiService.GetAddressDetails(getAddressDetailsRequest);
 
             return addressDetails;
-        }
-
-        public async Task<IEnumerable<CheckAddressData>> AutocompleteAddress(string input, string countryCode)
-        {
-            var autocompleteAddressRequest = new AutocompleteAddressRequest
-            {
-                Key = _conf["Loqate:ApiKey"],
-                Text = input,
-                Origin = countryCode
-            };
-            var autocompleteAddressResponse = await _loqateAddressApiService.AutocompleteAddress(autocompleteAddressRequest);
-            var placeIds = await getAddressIds(autocompleteAddressResponse);
-            var addressDetails = await Task.WhenAll(placeIds.Take(5).Select(pId => GetAddressDetails(pId)));
-            var checkAddressDataList = addressDetails.Select(ad => new CheckAddressData
-            {
-                Address = ad.Items.FirstOrDefault().Label,
-                Fields = getFields(ad.Items.FirstOrDefault()).ToArray()
-            });
-
-            return checkAddressDataList;
-        }
-
-        public async Task<IEnumerable<CheckAddressData>> ValidateAddress(StructuredInput input)
-        {
-            var request = getLoqateValidationAddress(input);
-            var responses = await _loqateAddressApiService.ValidateAddress(request);
-            var checkAddressData = responses.FirstOrDefault().Matches.Where(m => !string.IsNullOrEmpty(m.Address)).Select(m => new CheckAddressData
-            {
-                Address = m.Address,
-                Fields = getFields(m).ToArray()
-            });
-
-            return checkAddressData;
-        }
-
-        public async Task<IEnumerable<CheckAddressData>> ValidateAddress(string input, string coutryCode)
-        {
-            var request = getLoqateValidationAddress(input, coutryCode);
-            var responses = await _loqateAddressApiService.ValidateAddress(request);
-            var checkAddressData = responses.FirstOrDefault().Matches.Select(m => new CheckAddressData
-            {
-                Address = m.Address,
-                Fields = getFields(m).ToArray()
-            });
-
-            return checkAddressData;
-        }
-
-        public string GetMatchVerificationLavel(string AQI)
-        {
-            switch (AQI)
-            {
-                case "A":
-                    return "Excellent";
-                case "B":
-                    return "Good";
-                case "C":
-                    return "Average";
-                case "D":
-                    return "Poor";
-                case "E":
-                    return "Bad";
-                default:
-                    return "Bad";
-            }
         }
 
         private async Task<List<string>> getAddressIds(AutocompleteAddressResponse response)
@@ -104,7 +46,7 @@ namespace CheckAddressApp.Services
                     var autocompleteAddressRequest = new AutocompleteAddressRequest
                     {
                         Container = item.Id,
-                        Key = _conf["Loqate:ApiKey"]
+                        Key = _apiKey
                     };
                     var autocompleteContainerResponse = await _loqateAddressApiService.AutocompleteAddress(autocompleteAddressRequest);
                     var id = autocompleteContainerResponse.Items.First().Id;
@@ -120,52 +62,113 @@ namespace CheckAddressApp.Services
             return resultIds;
         }
 
-        private ValidateAddressRequest getLoqateValidationAddress(StructuredInput input)
+        private ValidateAddressRequest getValidationAddress(CheckAddressInput input)
         {
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
+
+            var countryCode = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO2 : null;
             var request = new ValidateAddressRequest
             {
-                Key = _conf["Loqate:ApiKey"],
-                Addresses = new List<ValidateAddressRequestAddress>
-                {
-                    new ValidateAddressRequestAddress
-                    {
-                        Address = input.Input,
-                        Locality = input.City,
-                        DependentLocality = input.District,
-                        PostalCode = input.PostalCode,
-                        Country = input.CountryCode2,
-                        Address1 = input.StreetAndHouseNumber
-                    }
-                }
+                Key = _apiKey,
+                Addresses = new List<ValidateAddressRequestAddress>()
             };
+            ValidateAddressRequestAddress validateAddressRequest;
+
+            if (input.StructuredInput == null)
+            {
+                validateAddressRequest = new ValidateAddressRequestAddress
+                {
+                    Address = input.FreeInput,
+                    Country = countryCode
+                };
+            }
+            else
+            {
+                validateAddressRequest = new ValidateAddressRequestAddress
+                {
+                    Address = input.FreeInput,
+                    Locality = input.StructuredInput.City,
+                    DependentLocality = input.StructuredInput.District,
+                    PostalCode = input.StructuredInput.PostalCode,
+                    Country = countryCode,
+                    Address1 = input.StructuredInput.StreetAndHouseNumber
+                };
+            }
+
+            request.Addresses.Add(validateAddressRequest);
 
             return request;
         }
 
-        private ValidateAddressRequest getLoqateValidationAddress(string input, string countryCode)
+        public override Task<ServiceData> AutosuggestAddress(CheckAddressInput input)
         {
-            var request = new ValidateAddressRequest
+            throw new NotImplementedException();
+        }
+
+        public override async Task<ServiceData> AutocompleteAddress(CheckAddressInput input)
+        {
+            if (input == null)
             {
-                Key = _conf["Loqate:ApiKey"],
-                Addresses = new List<ValidateAddressRequestAddress>
-                {
-                    new ValidateAddressRequestAddress
-                    {
-                        Address = input,
-                        Country = countryCode
-                    }
-                }
+                throw new ArgumentException("Input cannot be null.");
+            }
+
+            var autocompleteAddressRequest = new AutocompleteAddressRequest
+            {
+                Key = _apiKey,
+                Text = input.FreeInput,
+                Origin = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO2 : null
+            };
+            var autocompleteAddressResponse = await _loqateAddressApiService.AutocompleteAddress(autocompleteAddressRequest);
+
+            if (autocompleteAddressResponse == null)
+            {
+                throw new Exception("Autocomplete address response is null.");
+            }
+
+            var placeIds = await getAddressIds(autocompleteAddressResponse);
+            var addressDetails = await Task.WhenAll(placeIds.Take(5).Select(pId => GetAddressDetails(pId)));
+            var checkAddressData = addressDetails.Select(ad => new CheckAddressData
+            {
+                Address = ad.Items.FirstOrDefault().Label,
+                Fields = getFields(ad.Items.FirstOrDefault()).ToArray()
+            });
+
+            var serviceData = new ServiceData
+            {
+                ServiceName = "LoqateService",
+                CheckAddressData = checkAddressData
             };
 
-            return request;
+            return serviceData;
         }
 
-        public void Dispose()
+        public override async Task<ServiceData> ValidateAddress(CheckAddressInput input)
         {
-            _loqateAddressApiService.Dispose();
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
 
-            GC.SuppressFinalize(this);
+            var request = getValidationAddress(input);
+            var responses = await _loqateAddressApiService.ValidateAddress(request);
+            var checkAddressData = responses.FirstOrDefault()?.Matches?.Where(m => !string.IsNullOrEmpty(m.Address)).Select(m => new CheckAddressData
+            {
+                Address = m.Address,
+                Fields = getFields(m).ToArray()
+            }) ?? [];
+
+            var serviceData = new ServiceData
+            {
+                ServiceName = "LoqateService",
+                CheckAddressData = checkAddressData
+            };
+
+            return serviceData;
         }
+
         ~LoqateService()
         {
             _loqateAddressApiService.Dispose();
