@@ -3,9 +3,9 @@ using System.Net.Http.Json;
 
 namespace CheckAddressApp.Services.Api
 {
-    public abstract class BaseApiService
+    public abstract class BaseAddressApiService
     {
-        protected virtual async Task<TResult> getResult<TResult>(HttpResponseMessage response)
+        protected virtual async Task<TResult> getResult<TResult>(HttpResponseMessage response) where TResult : class
         {
             if (response.StatusCode != HttpStatusCode.OK)
             {

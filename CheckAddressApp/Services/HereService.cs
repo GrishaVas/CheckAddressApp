@@ -14,102 +14,6 @@ namespace CheckAddressApp.Services
             _hereAddressApiService = new HereAddressApiService(conf["Here:ApiKey"]);
         }
 
-        public async Task<IEnumerable<CheckAddressData>> AutosuggestAddress(string input, string countryCode)
-        {
-            if (!string.IsNullOrEmpty(countryCode) && countryCode.Length != 3)
-            {
-                throw new ArgumentException("Wrong country code.");
-            }
-
-            var hereValidateRequest = new ValidateAddressRequest(input)
-            {
-                In = countryCode
-            };
-            var hereValidateResponse = await _hereAddressApiService.ValidateAddress(hereValidateRequest);
-
-            if (hereValidateResponse.Items == null)
-            {
-                throw new Exception($"Here validate response items are null.");
-            }
-
-            var checkAddressData = new List<CheckAddressData>();
-
-            foreach (var item in hereValidateResponse.Items.Take(5))
-            {
-                var hereAutosuggestResponse = await getAutosuggestAddress(input, countryCode, item.Position.Lng.ToString(), item.Position.Lat.ToString());
-                var checkAddressDataItems = hereAutosuggestResponse?.Items?.Select(i => new CheckAddressData
-                {
-                    Address = i.Address.Label,
-                    Fields = getFields(i).ToArray()
-                });
-
-                if (checkAddressDataItems != null)
-                {
-                    checkAddressData.AddRange(checkAddressDataItems);
-                }
-            }
-
-            return checkAddressData;
-        }
-
-        public async Task<IEnumerable<CheckAddressData>> AutocompleteAddress(string input, string countryCode)
-        {
-            if (!string.IsNullOrEmpty(countryCode) && countryCode.Length != 3)
-            {
-                throw new ArgumentException("Wrong country code.");
-            }
-
-            var hereAutocompleteRequest = new AutocompleteAddressRequest(input)
-            {
-                In = countryCode
-            };
-            var hereAutocompleteResponse = await _hereAddressApiService.AutocompleteAddress(hereAutocompleteRequest);
-            var addressIds = hereAutocompleteResponse?.Items?.Select(i => i.Id);
-            var checkAddressData = new List<CheckAddressData>();
-
-            if (addressIds == null)
-            {
-                throw new Exception("Address ids is null.");
-            }
-
-            foreach (var id in addressIds)
-            {
-                var hereLookupRequest = new LookupAddressRequest(id);
-                var hereLookupResponse = await _hereAddressApiService.LookupAddress(hereLookupRequest);
-
-                if (hereLookupResponse != null)
-                {
-                    var checkAddressDataItem = new CheckAddressData
-                    {
-                        Address = hereLookupResponse.Address.Label,
-                        Fields = getFields(hereLookupResponse).ToArray()
-                    };
-
-                    checkAddressData.Add(checkAddressDataItem);
-                }
-            }
-
-            return checkAddressData;
-        }
-
-        public async Task<IEnumerable<CheckAddressData>> ValidateAddress(StructuredInput input)
-        {
-            var request = getHereValidationAddress(input);
-            var validateAddresResponse = await _hereAddressApiService.ValidateAddress(request);
-            var checkAddressData = getCheckAddressData(validateAddresResponse);
-
-            return checkAddressData;
-        }
-
-        public async Task<IEnumerable<CheckAddressData>> ValidateAddress(string input, string countryCode)
-        {
-            var request = getHereValidationAddress(input, countryCode);
-            var validateAddresResponse = await _hereAddressApiService.ValidateAddress(request);
-            var checkAddressData = getCheckAddressData(validateAddresResponse);
-
-            return checkAddressData;
-        }
-
         private IEnumerable<CheckAddressData> getCheckAddressData(ValidateAddressResponse validateAddresResponse)
         {
             if (validateAddresResponse == null)
@@ -135,26 +39,6 @@ namespace CheckAddressApp.Services
             };
 
             return _hereAddressApiService.AutosuggestAddress(hereAutosuggestRequest);
-        }
-
-        private ValidateAddressRequest getHereValidationAddress(StructuredInput input)
-        {
-            var validateAddressRequest = new ValidateAddressRequest(input.Input)
-            {
-                In = input.CountryCode3
-            };
-
-            return validateAddressRequest;
-        }
-
-        private ValidateAddressRequest getHereValidationAddress(string input, string countryCode)
-        {
-            var validateAddressRequest = new ValidateAddressRequest(input)
-            {
-                In = countryCode
-            };
-
-            return validateAddressRequest;
         }
 
         public void Dispose()
@@ -198,6 +82,126 @@ namespace CheckAddressApp.Services
             fields.AddRange(base.getFields(item.Position, "Position"));
 
             return fields;
+        }
+
+        public override async Task<ServiceData> AutosuggestAddress(CheckAddressInput input)
+        {
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
+
+            var countryCode = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO3 : null;
+            var hereValidateRequest = new ValidateAddressRequest(input.FreeInput)
+            {
+                In = countryCode
+            };
+            var hereValidateResponse = await _hereAddressApiService.ValidateAddress(hereValidateRequest);
+
+            if (hereValidateResponse.Items == null)
+            {
+                throw new Exception($"Here validate response items are null.");
+            }
+
+            var checkAddressData = new List<CheckAddressData>();
+
+            foreach (var item in hereValidateResponse.Items.Take(5))
+            {
+                var hereAutosuggestResponse = await getAutosuggestAddress(input.FreeInput, countryCode, item.Position.Lng.ToString(), item.Position.Lat.ToString());
+                var checkAddressDataItems = hereAutosuggestResponse?.Items?.Select(i => new CheckAddressData
+                {
+                    Address = i.Address.Label,
+                    Fields = getFields(i).ToArray()
+                });
+
+                if (checkAddressDataItems != null)
+                {
+                    checkAddressData.AddRange(checkAddressDataItems);
+                }
+            }
+
+            var serviceData = new ServiceData
+            {
+                ServiceName = "HereService",
+                CheckAddressData = checkAddressData
+            };
+
+            return serviceData;
+        }
+
+        public override async Task<ServiceData> AutocompleteAddress(CheckAddressInput input)
+        {
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
+
+            var hereAutocompleteRequest = new AutocompleteAddressRequest(input.FreeInput)
+            {
+                In = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO3 : null
+            };
+            var hereAutocompleteResponse = await _hereAddressApiService.AutocompleteAddress(hereAutocompleteRequest);
+            var addressIds = hereAutocompleteResponse?.Items?.Select(i => i.Id);
+            var checkAddressData = new List<CheckAddressData>();
+
+            if (addressIds == null)
+            {
+                throw new Exception("Address ids is null.");
+            }
+
+            foreach (var id in addressIds)
+            {
+                var hereLookupRequest = new LookupAddressRequest(id);
+                var hereLookupResponse = await _hereAddressApiService.LookupAddress(hereLookupRequest);
+
+                if (hereLookupResponse != null)
+                {
+                    var checkAddressDataItem = new CheckAddressData
+                    {
+                        Address = hereLookupResponse.Address.Label,
+                        Fields = getFields(hereLookupResponse).ToArray()
+                    };
+
+                    checkAddressData.Add(checkAddressDataItem);
+                }
+            }
+
+            var serviceData = new ServiceData
+            {
+                ServiceName = "HereService",
+                CheckAddressData = checkAddressData
+            };
+
+            return serviceData;
+        }
+
+        public override async Task<ServiceData> ValidateAddress(CheckAddressInput input)
+        {
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
+
+            var request = getValidationRequest(input);
+            var validateAddressResponse = await _hereAddressApiService.ValidateAddress(request);
+            var checkAddressData = getCheckAddressData(validateAddressResponse);
+            var serviceData = new ServiceData
+            {
+                ServiceName = "HereService",
+                CheckAddressData = checkAddressData
+            };
+
+            return serviceData;
+        }
+
+        private ValidateAddressRequest getValidationRequest(CheckAddressInput input)
+        {
+            var validateAddressRequest = new ValidateAddressRequest(input.FreeInput)
+            {
+                In = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO3 : null
+            };
+
+            return validateAddressRequest;
         }
 
         ~HereService()

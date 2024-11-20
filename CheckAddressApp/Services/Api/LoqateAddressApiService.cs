@@ -5,7 +5,7 @@ using CheckAddressApp.Models.Loqate;
 
 namespace CheckAddressApp.Services.Api
 {
-    public class LoqateAddressApiService : BaseApiService, IDisposable
+    public class LoqateAddressApiService : BaseAddressApiService, IDisposable
     {
         private const string _baseAddress = "https://api.addressy.com/";
         private HttpClient _httpClient;
@@ -38,7 +38,7 @@ namespace CheckAddressApp.Services.Api
             var jsonContent = JsonContent.Create(request);
             var url = getAutocompleteUrl("Capture/Interactive/Find/v1.1/json3.ws", request);
             var response = await _httpClient.PostAsync(url, jsonContent);
-            var validateAddressResponses = await getResult<AutocompleteAddressResponse>(response);
+            var validateAddressResponses = await getResult(response);
 
             return validateAddressResponses;
         }
@@ -54,7 +54,7 @@ namespace CheckAddressApp.Services.Api
             _httpClient.Dispose();
         }
 
-        protected override async Task<TResult> getResult<TResult>(HttpResponseMessage response)
+        protected override async Task<TResult> getResult<TResult>(HttpResponseMessage response) where TResult : class
         {
             if (response.StatusCode != HttpStatusCode.OK)
             {
@@ -63,20 +63,53 @@ namespace CheckAddressApp.Services.Api
                 throw new Exception($"Status code: {response.StatusCode}. Content: {contentAsString}");
             }
 
-            TResult result;
+            TResult result = null;
             var jsonString = await response.Content.ReadAsStringAsync();
+            AutocompleteAddressResponseErrorItem error = null;
 
             try
             {
-                result = JsonSerializer.Deserialize<TResult>(jsonString);
+                error = JsonSerializer.Deserialize<AutocompleteAddressResponseErrorItem>(jsonString);
             }
             catch (Exception)
             {
-                var error = JsonSerializer.Deserialize<ErrorResponse>(jsonString);
+                result = JsonSerializer.Deserialize<TResult>(jsonString);
+            }
 
+            if (error != null)
+            {
                 throw new Exception($"{error.Description}");
             }
 
+            return result;
+        }
+
+        protected async Task<AutocompleteAddressResponse> getResult(HttpResponseMessage response)
+        {
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+                var contentAsString = await response.Content.ReadAsStringAsync();
+
+                throw new Exception($"Status code: {response.StatusCode}. Content: {contentAsString}");
+            }
+
+            AutocompleteAddressResponse result = null;
+            var jsonString = await response.Content.ReadAsStringAsync();
+            AutocompleteAddressResponseError error = null;
+
+            try
+            {
+                error = JsonSerializer.Deserialize<AutocompleteAddressResponseError>(jsonString);
+            }
+            catch (Exception)
+            {
+                result = JsonSerializer.Deserialize<AutocompleteAddressResponse>(jsonString);
+            }
+
+            if (error != null)
+            {
+                throw new Exception($"{error.Items.FirstOrDefault().Description}");
+            }
 
             return result;
         }
