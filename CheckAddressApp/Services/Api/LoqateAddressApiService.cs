@@ -16,9 +16,10 @@ namespace CheckAddressApp.Services.Api
             _httpClient.BaseAddress = new Uri(_baseAddress);
         }
 
-        public async Task<GetAddressDetailsResponse> GetAddressDetails(GetAddressDetailsRequest request)
+        public async Task<GetAddressDetailsResponse> GetAddressDetails(AddressDetailsRequest request)
         {
-            var response = await _httpClient.GetAsync($"Capture/Interactive/Retrieve/v1.2/json3.ws?Key={request.Key}&Id={request.Id}");
+            var detailsUrl = getDetailsUrl(request);
+            var response = await _httpClient.GetAsync(detailsUrl);
             var validateAddressResponse = await getResult<GetAddressDetailsResponse>(response);
 
             return validateAddressResponse;
@@ -26,6 +27,11 @@ namespace CheckAddressApp.Services.Api
 
         public async Task<List<ValidateAddressResponse>> ValidateAddress(ValidateAddressRequest request)
         {
+            if (request == null)
+            {
+                throw new Exception("Validate address request cannot be null");
+            }
+
             var jsonContent = JsonContent.Create(request);
             var response = await _httpClient.PostAsync("Cleansing/International/Batch/v1.00/json4.ws", jsonContent);
             var validateAddressResponse = await getResult<List<ValidateAddressResponse>>(response);
@@ -36,7 +42,7 @@ namespace CheckAddressApp.Services.Api
         public async Task<AutocompleteAddressResponse> AutocompleteAddress(AutocompleteAddressRequest request)
         {
             var jsonContent = JsonContent.Create(request);
-            var url = getAutocompleteUrl("Capture/Interactive/Find/v1.1/json3.ws", request);
+            var url = getAutocompleteUrl(request);
             var response = await _httpClient.PostAsync(url, jsonContent);
             var validateAddressResponses = await getResult(response);
 
@@ -63,17 +69,17 @@ namespace CheckAddressApp.Services.Api
                 throw new Exception($"Status code: {response.StatusCode}. Content: {contentAsString}");
             }
 
-            TResult result = null;
             var jsonString = await response.Content.ReadAsStringAsync();
+            TResult result = null;
             AutocompleteAddressResponseErrorItem error = null;
 
             try
             {
-                error = JsonSerializer.Deserialize<AutocompleteAddressResponseErrorItem>(jsonString);
+                result = JsonSerializer.Deserialize<TResult>(jsonString);
             }
             catch (Exception)
             {
-                result = JsonSerializer.Deserialize<TResult>(jsonString);
+                error = JsonSerializer.Deserialize<AutocompleteAddressResponseErrorItem>(jsonString);
             }
 
             if (error != null)
@@ -93,17 +99,17 @@ namespace CheckAddressApp.Services.Api
                 throw new Exception($"Status code: {response.StatusCode}. Content: {contentAsString}");
             }
 
-            AutocompleteAddressResponse result = null;
             var jsonString = await response.Content.ReadAsStringAsync();
+            AutocompleteAddressResponse result = null;
             AutocompleteAddressResponseError error = null;
 
             try
             {
-                error = JsonSerializer.Deserialize<AutocompleteAddressResponseError>(jsonString);
+                result = JsonSerializer.Deserialize<AutocompleteAddressResponse>(jsonString);
             }
             catch (Exception)
             {
-                result = JsonSerializer.Deserialize<AutocompleteAddressResponse>(jsonString);
+                error = JsonSerializer.Deserialize<AutocompleteAddressResponseError>(jsonString);
             }
 
             if (error != null)
@@ -114,12 +120,31 @@ namespace CheckAddressApp.Services.Api
             return result;
         }
 
-        private string getAutocompleteUrl(string url, AutocompleteAddressRequest request)
+        private string getDetailsUrl(AddressDetailsRequest request)
         {
-            url += $"?Key={System.Web.HttpUtility.UrlEncode(request.Key)}";
-            url += $"&Text={System.Web.HttpUtility.UrlEncode(request.Text)}";
-            url += $"&Container={System.Web.HttpUtility.UrlEncode(request.Container)}";
-            url += $"&Origin={System.Web.HttpUtility.UrlEncode(request.Origin)}";
+            if (request == null)
+            {
+                throw new Exception("Address details request cannot be null.");
+            }
+
+            var result = $"Capture/Interactive/Retrieve/v1.2/json3.ws?Key={request.Key}&Id={request.Id}";
+
+            return result;
+        }
+
+        private string getAutocompleteUrl(AutocompleteAddressRequest request)
+        {
+            if (request == null)
+            {
+                throw new Exception("Autocomplete address request cannot be null.");
+            }
+
+            var url = "Capture/Interactive/Find/v1.1/json3.ws";
+
+            url += $"?Key={System.Web.HttpUtility.UrlEncode(request.Key)}" +
+                $"&Text={System.Web.HttpUtility.UrlEncode(request.Text)}" +
+                $"&Container={System.Web.HttpUtility.UrlEncode(request.Container)}" +
+                $"&Origin={System.Web.HttpUtility.UrlEncode(request.Origin)}";
 
             return url;
         }

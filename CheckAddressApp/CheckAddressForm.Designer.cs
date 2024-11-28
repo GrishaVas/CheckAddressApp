@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(CheckAddressForm));
             streetAndHouseNumberTextBox = new TextBox();
             label1 = new Label();
@@ -44,7 +43,7 @@
             button2 = new Button();
             apiTabControl = new TabControl();
             googleMapsTabPage = new TabPage();
-            label12 = new Label();
+            googleResponseTimeLabel = new Label();
             label2 = new Label();
             googleResponseListBox = new ListBox();
             label4 = new Label();
@@ -52,7 +51,7 @@
             dataGridViewTextBoxColumn7 = new DataGridViewTextBoxColumn();
             dataGridViewTextBoxColumn8 = new DataGridViewTextBoxColumn();
             loqateTabPage = new TabPage();
-            label13 = new Label();
+            loqateResponseTimeLabel = new Label();
             button3 = new Button();
             label18 = new Label();
             loqateResponseDataGridView = new DataGridView();
@@ -61,7 +60,7 @@
             label43 = new Label();
             loqateResponseListBox = new ListBox();
             smartyTabPage = new TabPage();
-            label14 = new Label();
+            smartyResponseTimeLabel = new Label();
             smartyResponseDataGridView = new DataGridView();
             dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
             dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
@@ -70,7 +69,7 @@
             label11 = new Label();
             smartyResponseListBox = new ListBox();
             hereTabPage = new TabPage();
-            label15 = new Label();
+            hereResponseTimeLabel = new Label();
             button5 = new Button();
             label48 = new Label();
             hereResponseListBox = new ListBox();
@@ -105,8 +104,6 @@
             smartyCheckBox = new CheckBox();
             loqateCheckBox = new CheckBox();
             googleMapsCheckBox = new CheckBox();
-            inputErrorProvider = new ErrorProvider(components);
-            apiChoiceErrorProvider = new ErrorProvider(components);
             saveAsAddressesFileDialog = new SaveFileDialog();
             openAddressesFileDialog = new OpenFileDialog();
             apiTabControl.SuspendLayout();
@@ -124,15 +121,13 @@
             tabPage2.SuspendLayout();
             tabPage3.SuspendLayout();
             apiGroupBox.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)inputErrorProvider).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)apiChoiceErrorProvider).BeginInit();
             SuspendLayout();
             // 
             // streetAndHouseNumberTextBox
             // 
             streetAndHouseNumberTextBox.Location = new Point(6, 40);
             streetAndHouseNumberTextBox.Name = "streetAndHouseNumberTextBox";
-            streetAndHouseNumberTextBox.Size = new Size(238, 27);
+            streetAndHouseNumberTextBox.Size = new Size(258, 27);
             streetAndHouseNumberTextBox.TabIndex = 0;
             streetAndHouseNumberTextBox.TextChanged += addressTextBox_TextChanged;
             // 
@@ -159,7 +154,7 @@
             // 
             cityTextBox.Location = new Point(6, 99);
             cityTextBox.Name = "cityTextBox";
-            cityTextBox.Size = new Size(169, 27);
+            cityTextBox.Size = new Size(189, 27);
             cityTextBox.TabIndex = 7;
             cityTextBox.TextChanged += cityTextBox_TextChanged;
             // 
@@ -175,7 +170,7 @@
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new Point(250, 17);
+            label6.Location = new Point(270, 17);
             label6.Name = "label6";
             label6.Size = new Size(87, 20);
             label6.TabIndex = 14;
@@ -183,7 +178,7 @@
             // 
             // postalCodeTextBox
             // 
-            postalCodeTextBox.Location = new Point(250, 40);
+            postalCodeTextBox.Location = new Point(270, 40);
             postalCodeTextBox.Name = "postalCodeTextBox";
             postalCodeTextBox.Size = new Size(113, 27);
             postalCodeTextBox.TabIndex = 13;
@@ -192,7 +187,7 @@
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(399, 72);
+            label7.Location = new Point(415, 72);
             label7.Name = "label7";
             label7.Size = new Size(60, 20);
             label7.TabIndex = 15;
@@ -201,7 +196,7 @@
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(181, 75);
+            label8.Location = new Point(201, 75);
             label8.Name = "label8";
             label8.Size = new Size(56, 20);
             label8.TabIndex = 17;
@@ -209,7 +204,7 @@
             // 
             // districtTextBox
             // 
-            districtTextBox.Location = new Point(181, 99);
+            districtTextBox.Location = new Point(201, 99);
             districtTextBox.Name = "districtTextBox";
             districtTextBox.Size = new Size(182, 27);
             districtTextBox.TabIndex = 16;
@@ -249,7 +244,7 @@
             // 
             // googleMapsTabPage
             // 
-            googleMapsTabPage.Controls.Add(label12);
+            googleMapsTabPage.Controls.Add(googleResponseTimeLabel);
             googleMapsTabPage.Controls.Add(label2);
             googleMapsTabPage.Controls.Add(googleResponseListBox);
             googleMapsTabPage.Controls.Add(label4);
@@ -263,14 +258,14 @@
             googleMapsTabPage.Text = "Google Maps";
             googleMapsTabPage.UseVisualStyleBackColor = true;
             // 
-            // label12
+            // googleResponseTimeLabel
             // 
-            label12.AutoSize = true;
-            label12.Location = new Point(6, 3);
-            label12.Name = "label12";
-            label12.Size = new Size(138, 20);
-            label12.TabIndex = 90;
-            label12.Text = "Response time: 0,3s";
+            googleResponseTimeLabel.AutoSize = true;
+            googleResponseTimeLabel.Location = new Point(6, 3);
+            googleResponseTimeLabel.Name = "googleResponseTimeLabel";
+            googleResponseTimeLabel.Size = new Size(138, 20);
+            googleResponseTimeLabel.TabIndex = 90;
+            googleResponseTimeLabel.Text = "Response time: 0,0s";
             // 
             // label2
             // 
@@ -334,7 +329,7 @@
             // 
             // loqateTabPage
             // 
-            loqateTabPage.Controls.Add(label13);
+            loqateTabPage.Controls.Add(loqateResponseTimeLabel);
             loqateTabPage.Controls.Add(button3);
             loqateTabPage.Controls.Add(label18);
             loqateTabPage.Controls.Add(loqateResponseDataGridView);
@@ -348,14 +343,14 @@
             loqateTabPage.Text = "Loqate";
             loqateTabPage.UseVisualStyleBackColor = true;
             // 
-            // label13
+            // loqateResponseTimeLabel
             // 
-            label13.AutoSize = true;
-            label13.Location = new Point(6, 3);
-            label13.Name = "label13";
-            label13.Size = new Size(138, 20);
-            label13.TabIndex = 91;
-            label13.Text = "Response time: 0,3s";
+            loqateResponseTimeLabel.AutoSize = true;
+            loqateResponseTimeLabel.Location = new Point(6, 3);
+            loqateResponseTimeLabel.Name = "loqateResponseTimeLabel";
+            loqateResponseTimeLabel.Size = new Size(138, 20);
+            loqateResponseTimeLabel.TabIndex = 91;
+            loqateResponseTimeLabel.Text = "Response time: 0,0s";
             // 
             // button3
             // 
@@ -429,7 +424,7 @@
             // 
             // smartyTabPage
             // 
-            smartyTabPage.Controls.Add(label14);
+            smartyTabPage.Controls.Add(smartyResponseTimeLabel);
             smartyTabPage.Controls.Add(smartyResponseDataGridView);
             smartyTabPage.Controls.Add(button4);
             smartyTabPage.Controls.Add(label47);
@@ -443,14 +438,14 @@
             smartyTabPage.Text = "Smarty";
             smartyTabPage.UseVisualStyleBackColor = true;
             // 
-            // label14
+            // smartyResponseTimeLabel
             // 
-            label14.AutoSize = true;
-            label14.Location = new Point(6, 3);
-            label14.Name = "label14";
-            label14.Size = new Size(138, 20);
-            label14.TabIndex = 91;
-            label14.Text = "Response time: 0,3s";
+            smartyResponseTimeLabel.AutoSize = true;
+            smartyResponseTimeLabel.Location = new Point(6, 3);
+            smartyResponseTimeLabel.Name = "smartyResponseTimeLabel";
+            smartyResponseTimeLabel.Size = new Size(138, 20);
+            smartyResponseTimeLabel.TabIndex = 91;
+            smartyResponseTimeLabel.Text = "Response time: 0,0s";
             // 
             // smartyResponseDataGridView
             // 
@@ -524,7 +519,7 @@
             // 
             // hereTabPage
             // 
-            hereTabPage.Controls.Add(label15);
+            hereTabPage.Controls.Add(hereResponseTimeLabel);
             hereTabPage.Controls.Add(button5);
             hereTabPage.Controls.Add(label48);
             hereTabPage.Controls.Add(hereResponseListBox);
@@ -537,14 +532,14 @@
             hereTabPage.Text = "Here";
             hereTabPage.UseVisualStyleBackColor = true;
             // 
-            // label15
+            // hereResponseTimeLabel
             // 
-            label15.AutoSize = true;
-            label15.Location = new Point(6, 3);
-            label15.Name = "label15";
-            label15.Size = new Size(138, 20);
-            label15.TabIndex = 91;
-            label15.Text = "Response time: 0,3s";
+            hereResponseTimeLabel.AutoSize = true;
+            hereResponseTimeLabel.Location = new Point(6, 3);
+            hereResponseTimeLabel.Name = "hereResponseTimeLabel";
+            hereResponseTimeLabel.Size = new Size(138, 20);
+            hereResponseTimeLabel.TabIndex = 91;
+            hereResponseTimeLabel.Text = "Response time: 0,0s";
             // 
             // button5
             // 
@@ -773,7 +768,7 @@
             // 
             countryTextBox.AutoCompleteCustomSource.AddRange(new string[] { "United States", "Slovakia", "Slovenia", "Singapore", "Sweden", "Portugal", "Puerto Rico", "Poland", "New Zealand", "Norway", "Netherlands", "Malaysia", "Mexico", "Latvia", "Luxembourg", "Lithuania", "Italy", "India", "Ireland", "Hungary", "Croatia", "United Kingdom", "France", "Finland", "Spain", "Estonia", "Denmark", "Germany", "Czechia", "Colombia", "Chile", "Switzerland", "Canada", "Brazil", "Bulgaria", "Belgium", "Australia", "Austria", "Argentina" });
             countryTextBox.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-            countryTextBox.Location = new Point(400, 95);
+            countryTextBox.Location = new Point(416, 95);
             countryTextBox.Name = "countryTextBox";
             countryTextBox.Size = new Size(125, 27);
             countryTextBox.TabIndex = 49;
@@ -783,11 +778,10 @@
             // 
             inputsChoiceTabControl.Controls.Add(tabPage2);
             inputsChoiceTabControl.Controls.Add(tabPage3);
-            inputErrorProvider.SetIconAlignment(inputsChoiceTabControl, ErrorIconAlignment.BottomRight);
             inputsChoiceTabControl.Location = new Point(16, 26);
             inputsChoiceTabControl.Name = "inputsChoiceTabControl";
             inputsChoiceTabControl.SelectedIndex = 0;
-            inputsChoiceTabControl.Size = new Size(377, 169);
+            inputsChoiceTabControl.Size = new Size(398, 169);
             inputsChoiceTabControl.TabIndex = 48;
             inputsChoiceTabControl.SelectedIndexChanged += inputsChoice_SelectedIndexChanged;
             // 
@@ -802,11 +796,10 @@
             tabPage2.Controls.Add(label3);
             tabPage2.Controls.Add(label1);
             tabPage2.Controls.Add(cityTextBox);
-            inputErrorProvider.SetIconAlignment(tabPage2, ErrorIconAlignment.BottomRight);
             tabPage2.Location = new Point(4, 29);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(369, 136);
+            tabPage2.Size = new Size(390, 136);
             tabPage2.TabIndex = 0;
             tabPage2.Text = "Structured Input";
             // 
@@ -815,11 +808,10 @@
             tabPage3.BackColor = Color.WhiteSmoke;
             tabPage3.Controls.Add(freeInputTextBox);
             tabPage3.Controls.Add(label10);
-            inputErrorProvider.SetIconAlignment(tabPage3, ErrorIconAlignment.BottomRight);
             tabPage3.Location = new Point(4, 29);
             tabPage3.Name = "tabPage3";
             tabPage3.Padding = new Padding(3);
-            tabPage3.Size = new Size(369, 136);
+            tabPage3.Size = new Size(390, 136);
             tabPage3.TabIndex = 1;
             tabPage3.Text = "Free Input";
             // 
@@ -865,7 +857,7 @@
             apiGroupBox.Controls.Add(googleMapsCheckBox);
             apiGroupBox.Location = new Point(16, 207);
             apiGroupBox.Name = "apiGroupBox";
-            apiGroupBox.Size = new Size(377, 68);
+            apiGroupBox.Size = new Size(398, 68);
             apiGroupBox.TabIndex = 44;
             apiGroupBox.TabStop = false;
             apiGroupBox.Text = "Check Provider";
@@ -873,54 +865,46 @@
             // hereCheckBox
             // 
             hereCheckBox.AutoSize = true;
-            hereCheckBox.Location = new Point(298, 26);
+            hereCheckBox.Location = new Point(6, 26);
             hereCheckBox.Name = "hereCheckBox";
-            hereCheckBox.Size = new Size(63, 24);
+            hereCheckBox.Size = new Size(67, 24);
             hereCheckBox.TabIndex = 3;
-            hereCheckBox.Text = "Here";
+            hereCheckBox.Text = "HERE";
             hereCheckBox.UseVisualStyleBackColor = true;
             hereCheckBox.CheckedChanged += hereCheckBox_CheckedChanged;
             // 
             // smartyCheckBox
             // 
             smartyCheckBox.AutoSize = true;
-            smartyCheckBox.Location = new Point(215, 26);
+            smartyCheckBox.Location = new Point(79, 26);
             smartyCheckBox.Name = "smartyCheckBox";
-            smartyCheckBox.Size = new Size(77, 24);
+            smartyCheckBox.Size = new Size(86, 24);
             smartyCheckBox.TabIndex = 2;
-            smartyCheckBox.Text = "Smarty";
+            smartyCheckBox.Text = "SMARTY";
             smartyCheckBox.UseVisualStyleBackColor = true;
             smartyCheckBox.CheckedChanged += smartyCheckBox_CheckedChanged;
             // 
             // loqateCheckBox
             // 
             loqateCheckBox.AutoSize = true;
-            loqateCheckBox.Location = new Point(132, 26);
+            loqateCheckBox.Location = new Point(308, 26);
             loqateCheckBox.Name = "loqateCheckBox";
-            loqateCheckBox.Size = new Size(77, 24);
+            loqateCheckBox.Size = new Size(84, 24);
             loqateCheckBox.TabIndex = 1;
-            loqateCheckBox.Text = "Loqate";
+            loqateCheckBox.Text = "LOQATE";
             loqateCheckBox.UseVisualStyleBackColor = true;
             loqateCheckBox.CheckedChanged += loqateCheckBox_CheckedChanged;
             // 
             // googleMapsCheckBox
             // 
             googleMapsCheckBox.AutoSize = true;
-            googleMapsCheckBox.Location = new Point(6, 26);
+            googleMapsCheckBox.Location = new Point(171, 26);
             googleMapsCheckBox.Name = "googleMapsCheckBox";
-            googleMapsCheckBox.Size = new Size(120, 24);
+            googleMapsCheckBox.Size = new Size(131, 24);
             googleMapsCheckBox.TabIndex = 0;
-            googleMapsCheckBox.Text = "Google Maps";
+            googleMapsCheckBox.Text = "GOOGLE MAPS";
             googleMapsCheckBox.UseVisualStyleBackColor = true;
             googleMapsCheckBox.CheckedChanged += googleMapsCheckBox_CheckedChanged;
-            // 
-            // inputErrorProvider
-            // 
-            inputErrorProvider.ContainerControl = this;
-            // 
-            // apiChoiceErrorProvider
-            // 
-            apiChoiceErrorProvider.ContainerControl = this;
             // 
             // saveAsAddressesFileDialog
             // 
@@ -968,8 +952,6 @@
             tabPage3.PerformLayout();
             apiGroupBox.ResumeLayout(false);
             apiGroupBox.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)inputErrorProvider).EndInit();
-            ((System.ComponentModel.ISupportInitialize)apiChoiceErrorProvider).EndInit();
             ResumeLayout(false);
         }
 
@@ -1050,8 +1032,6 @@
         private Button button3;
         private TextBox requestAddressTextBox;
         private Label label9;
-        private ErrorProvider inputErrorProvider;
-        private ErrorProvider apiChoiceErrorProvider;
         private TabPage smartyTabPage;
         private ListBox smartyResponseListBox;
         private CheckBox smartyCheckBox;
@@ -1097,9 +1077,9 @@
         private TextBox addressesSearchTextBox;
         private Label label5;
         private TextBox addressesFileNameTextBox;
-        private Label label12;
-        private Label label13;
-        private Label label14;
-        private Label label15;
+        private Label googleResponseTimeLabel;
+        private Label loqateResponseTimeLabel;
+        private Label smartyResponseTimeLabel;
+        private Label hereResponseTimeLabel;
     }
 }

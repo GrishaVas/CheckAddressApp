@@ -11,7 +11,7 @@ namespace CheckAddressApp.Services.Api
             {
                 var contentAsString = await response.Content.ReadAsStringAsync();
 
-                throw new Exception($"Status code: {response.StatusCode}. Content: {contentAsString}");
+                throw new Exception($"Error while receiving response. Status code: {response.StatusCode}. Content: {contentAsString}");
             }
 
             var result = await response.Content.ReadFromJsonAsync<TResult>();

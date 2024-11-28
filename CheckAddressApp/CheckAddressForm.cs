@@ -1,7 +1,9 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
 using CheckAddressApp.Models;
 using CheckAddressApp.Services;
 using Microsoft.Extensions.Configuration;
+using qAcProviderTest;
 using qAcProviderTest.Properties;
 
 namespace CheckAddressApp
@@ -9,6 +11,7 @@ namespace CheckAddressApp
     public partial class CheckAddressForm : Form
     {
         private ErrorForm _errorForm;
+        private UserNotificationForm _userNotificationForm;
         private GoogleService _googleService;
         private LoqateService _loqateService;
         private SmartyService _smartyService;
@@ -22,12 +25,13 @@ namespace CheckAddressApp
         private IEnumerable<CheckAddressData> _hereAutosuggestResponse;
         private IEnumerable<CheckAddressData> _googleValidateResponse;
         private IEnumerable<CheckAddressData> _googleAutocompleteResponse;
-        private IEnumerable<InputFromFile> _addressesFromFile;
+        private IEnumerable<CheckAddressInput> _addressesFromFile;
 
         private IConfiguration _conf;
         private List<CheckBox> _apiCheckBoxes;
         private IEnumerable<Button> _buttonsToControlAddressesFromFile;
         private string _addressesFilePath = "addresses.csv";
+        private string _oneLineInputFormat;
 
         public CheckAddressForm(IConfiguration conf)
         {
@@ -36,16 +40,17 @@ namespace CheckAddressApp
             _loqateService = new LoqateService(conf);
             _hereService = new HereService(conf);
             _errorForm = new ErrorForm();
+            _userNotificationForm = new UserNotificationForm(this);
             _conf = conf;
 
             InitializeComponent();
 
             _apiCheckBoxes = new List<CheckBox>
             {
-                googleMapsCheckBox,
                 hereCheckBox,
+                smartyCheckBox,
+                googleMapsCheckBox,
                 loqateCheckBox,
-                smartyCheckBox
             };
             _buttonsToControlAddressesFromFile = new List<Button>
             {
@@ -57,6 +62,7 @@ namespace CheckAddressApp
             };
 
             Text = $"q.address AC Provider Test v_{Assembly.GetExecutingAssembly().GetName().Version}";
+            _oneLineInputFormat = _conf["RequestInputStringFormat"];
         }
         ~CheckAddressForm()
         {
@@ -97,14 +103,22 @@ namespace CheckAddressApp
                     inputFileStr = await reader.ReadToEndAsync();
                 }
 
-                _addressesFromFile = getInputsFromFile(inputFileStr);
+                var inputsFromFile = getInputsFromFile(inputFileStr);
 
-                var items = _addressesFromFile.Select(i => i.GetString());
+                if (inputsFromFile == null)
+                {
+                    return;
+                }
+
+                _addressesFromFile = inputsFromFile;
+
+                var items = _addressesFromFile.Select(i => i.ToString());
 
                 addressesFromFileListBox.Items.Clear();
                 addressesFromFileListBox.Items.AddRange(items.ToArray());
 
                 addressesFileNameTextBox.Text = path;
+                _addressesFilePath = path;
             }
         }
 
@@ -114,6 +128,7 @@ namespace CheckAddressApp
             _googleValidateResponse = null;
             googleResponseListBox.Items.Clear();
             googleResponseDataGridView.Rows.Clear();
+            googleResponseTimeLabel.Text = "Response time: 0,0";
         }
 
         private void clearLoqateResponse()
@@ -122,6 +137,7 @@ namespace CheckAddressApp
             _loqateValidateResponse = null;
             loqateResponseDataGridView.Rows.Clear();
             loqateResponseListBox.Items.Clear();
+            loqateResponseTimeLabel.Text = "Response time: 0,0";
         }
 
         private void clearSmartyResponse()
@@ -130,6 +146,7 @@ namespace CheckAddressApp
             _smartyValidateResponse = null;
             smartyResponseDataGridView.Rows.Clear();
             smartyResponseListBox.Items.Clear();
+            smartyResponseTimeLabel.Text = "Response time: 0,0";
         }
 
         private void clearHereResponse()
@@ -139,6 +156,7 @@ namespace CheckAddressApp
             hereResponseListBox.Items.Clear();
             hereResponseDataGridView.Rows.Clear();
             _hereValidateResponse = null;
+            hereResponseTimeLabel.Text = "Response time: 0,0";
         }
 
         private async Task<ServiceData> validation<TApiService>(CheckAddressInput input, TApiService service) where TApiService : BaseService
@@ -187,7 +205,7 @@ namespace CheckAddressApp
             if (!string.IsNullOrEmpty(structuredInput.ToString()))
             {
                 checkAddressInput.StructuredInput = structuredInput;
-                checkAddressInput.FreeInput = structuredInput.ToString();
+                checkAddressInput.FreeInput = structuredInput.ToString(_oneLineInputFormat);
             }
             else
             {
@@ -219,9 +237,6 @@ namespace CheckAddressApp
             districtTextBox.Text = "";
             requestAddressTextBox.Text = "";
             freeInputTextBox.Text = "";
-
-            inputErrorProvider.SetError(inputsChoiceTabControl, "");
-            inputErrorProvider.SetError(countryTextBox, "");
         }
 
         private void showError(Exception ex)
@@ -243,24 +258,116 @@ namespace CheckAddressApp
                     $"Stack trace: {ex.StackTrace}";
             }
         }
-
-        private List<InputFromFile> getInputsFromFile(string inputFileStr)
+        private void showNotificatoin(string message)
         {
-            var inputsFromFile = new List<InputFromFile>();
+            if (_userNotificationForm == null)
+            {
+                throw new Exception("User notification form does not exist.");
+            }
+
+            if (_userNotificationForm.Visible)
+            {
+                _userNotificationForm.Focus();
+            }
+            else
+            {
+                _userNotificationForm.Show();
+            }
+
+            var errorRichTextBox = _userNotificationForm.Controls.Find("userNotificationRichTextBox", true).FirstOrDefault();
+
+            if (errorRichTextBox != null)
+            {
+                errorRichTextBox.Text = message;
+            }
+        }
+
+        private CheckAddressInput getCheckAddressInput(InputFromFile inputFromFile, string oneLineFormat)
+        {
+            var checkAddressInput = new CheckAddressInput
+            {
+                Country = inputFromFile.Country,
+                StructuredInput = new StructuredInput
+                {
+                    City = inputFromFile.City,
+                    District = inputFromFile.District,
+                    PostalCode = inputFromFile.PostalCode,
+                    StreetAndHouseNumber = inputFromFile.StreetAndHouseNumber
+                }
+            };
+
+            checkAddressInput.FreeInput = checkAddressInput.StructuredInput.ToString(oneLineFormat);
+
+            return checkAddressInput;
+        }
+
+        private List<CheckAddressInput> getInputsFromFile(string inputFileStr)
+        {
+            var inputsFromFile = new List<CheckAddressInput>();
             const string rowsSep = "\r\n";
             const char wordsSep = ',';
-            var rows = inputFileStr.Split(rowsSep);
+            var rows = inputFileStr.Split(rowsSep, StringSplitOptions.RemoveEmptyEntries);
+
+            if (rows.Length < 1)
+            {
+                showNotificatoin("Csv file is empty.");
+
+                return null;
+            }
+
+            string errorMessage;
+            var iscsvValid = isCsvValid(inputFileStr, rows[0], out errorMessage);
+
+            if (!iscsvValid)
+            {
+                showNotificatoin(errorMessage);
+
+                return null;
+            }
+
             var propNames = rows[0].Split(wordsSep);
 
             foreach (var row in rows.Skip(1))
             {
                 var values = row.Split(wordsSep);
-                var inputFormFile = getInputFromFile(propNames, values);
+                var inputFromFile = getInputFromFile(propNames, values);
 
-                inputsFromFile.Add(inputFormFile);
+                if (inputFromFile != null)
+                {
+                    var chechAddressInput = getCheckAddressInput(inputFromFile, _oneLineInputFormat);
+
+                    inputsFromFile.Add(chechAddressInput);
+                }
             }
 
             return inputsFromFile;
+        }
+
+        private bool isCsvValid(string csvText, string csvHeadRow, out string errorMessage)
+        {
+            var regex = new Regex(@"\A([^,\r\n]+,)+[^,\r\n]+\z");
+            var isHeadRowValid = regex.IsMatch(csvHeadRow);
+
+            if (!isHeadRowValid)
+            {
+                errorMessage = "The csv header row is not valid.";
+
+                return false;
+            }
+
+            var delimetersCount = csvHeadRow.Count(c => c == ',');
+            regex = new Regex(@"\A([^,\n]+,)+[^,\n]+(\n|\z)((([^,\n]*,[^,\n]*){" + delimetersCount + @"}(\n|\z))*\z)");
+            var iscsvTextValid = regex.IsMatch(csvText);
+
+            if (!iscsvTextValid)
+            {
+                errorMessage = "The csv is not valid.";
+
+                return false;
+            }
+
+            errorMessage = null;
+            return true;
         }
 
         private InputFromFile getInputFromFile(string[] propNames, string[] values)
@@ -268,6 +375,13 @@ namespace CheckAddressApp
             var inputFormFile = new InputFromFile();
             var inputFormFileType = typeof(InputFromFile);
             var inputFormFileProps = inputFormFileType.GetProperties();
+            var mathcesCount = inputFormFileProps.Where(p => propNames.Contains(p.Name)).Count();
+
+            if (mathcesCount == 0)
+            {
+                return null;
+            }
+
 
             for (int i = 0; i < propNames.Length; i++)
             {
@@ -282,66 +396,80 @@ namespace CheckAddressApp
             return inputFormFile;
         }
 
-        private void fromFileInputAddresseslistBox_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (addressesFromFileListBox.SelectedItem != null)
-            {
-                var selectedTab = inputsChoiceTabControl.SelectedTab.Text;
-                var inputFromFile = _addressesFromFile.FirstOrDefault(i => i.GetString() == addressesFromFileListBox.SelectedItem.ToString());
-
-                if (selectedTab == "Structured Input")
-                {
-                    streetAndHouseNumberTextBox.Text = inputFromFile?.StreetAndHouseNumber;
-                    postalCodeTextBox.Text = inputFromFile?.PostalCode;
-                    cityTextBox.Text = inputFromFile?.City;
-                    districtTextBox.Text = inputFromFile?.District;
-                    countryTextBox.Text = inputFromFile?.Country;
-                }
-                else
-                {
-                    freeInputTextBox.Text = inputFromFile?.GetString(false);
-                    countryTextBox.Text = inputFromFile?.Country;
-                }
-            }
-        }
-
-        private void setGoogleOutput(ServiceData output)
+        private void setGoogleOutput(ServiceData output, double time)
         {
             var addresses = output.CheckAddressData.Select(cad => cad.Address);
 
-            googleResponseListBox.Items.Clear();
-            googleResponseListBox.Items.AddRange(addresses.ToArray());
+            clearGoogleResponse();
+
+            if (addresses.Count() < 1)
+            {
+                googleResponseListBox.Items.Add("None");
+            }
+            else
+            {
+                googleResponseListBox.Items.AddRange(addresses.ToArray());
+            }
 
             _googleValidateResponse = output.CheckAddressData;
+            googleResponseTimeLabel.Text = $"Response time: {Math.Round(time, 3)}s";
         }
-        private void setLoqateOutput(ServiceData output)
+
+        private void setLoqateOutput(ServiceData output, double time)
         {
             var addresses = output.CheckAddressData.Select(cad => cad.Address);
 
-            loqateResponseListBox.Items.Clear();
-            loqateResponseListBox.Items.AddRange(addresses.ToArray());
+            clearLoqateResponse();
+
+            if (addresses.Count() < 1)
+            {
+                loqateResponseListBox.Items.Add("None");
+            }
+            else
+            {
+                loqateResponseListBox.Items.AddRange(addresses.ToArray());
+            }
 
             _loqateValidateResponse = output.CheckAddressData;
+            loqateResponseTimeLabel.Text = $"Response time: {Math.Round(time, 3)}s";
         }
 
-        private void setSmartyOutput(ServiceData output)
+        private void setSmartyOutput(ServiceData output, double time)
         {
             var addresses = output.CheckAddressData.Select(cad => cad.Address);
 
-            smartyResponseListBox.Items.Clear();
-            smartyResponseListBox.Items.AddRange(addresses.ToArray());
+            clearSmartyResponse();
+
+            if (addresses.Count() < 1)
+            {
+                smartyResponseListBox.Items.Add("None");
+            }
+            else
+            {
+                smartyResponseListBox.Items.AddRange(addresses.ToArray());
+            }
 
             _smartyValidateResponse = output.CheckAddressData;
+            smartyResponseTimeLabel.Text = $"Response time: {Math.Round(time, 3)}s";
         }
 
-        private void setHereOutput(ServiceData output)
+        private void setHereOutput(ServiceData output, double time)
         {
             var addresses = output.CheckAddressData.Select(cad => cad.Address);
 
-            hereResponseListBox.Items.Clear();
-            hereResponseListBox.Items.AddRange(addresses.ToArray());
+            clearHereResponse();
+
+            if (addresses.Count() < 1)
+            {
+                hereResponseListBox.Items.Add("None");
+            }
+            else
+            {
+                hereResponseListBox.Items.AddRange(addresses.ToArray());
+            }
 
             _hereValidateResponse = output.CheckAddressData;
+            hereResponseTimeLabel.Text = $"Response time: {Math.Round(time, 3)}s";
         }
 
         private async Task insertIntoAddressesFileAt(string path, InputFromFile input, int index)
@@ -395,60 +523,135 @@ namespace CheckAddressApp
         {
             var checkAddressInput = getCheckAddressInput();
 
+            requestAddressTextBox.Text = $"{checkAddressInput.FreeInput} {BaseService.getCountryCode(checkAddressInput.Country).ISO2}";
+
             if (string.IsNullOrEmpty(checkAddressInput.FreeInput))
             {
-                inputErrorProvider.SetError(inputsChoiceTabControl, "Inputs cannot be null.");
+                showNotificatoin("Inputs cannot be null.");
 
                 return;
             }
 
             if (googleMapsCheckBox.Checked)
             {
+                var startTime = DateTime.UtcNow.TimeOfDay.TotalSeconds;
                 var googleServiceData = await validation(checkAddressInput, _googleService);
+                var time = DateTime.UtcNow.TimeOfDay.TotalSeconds - startTime;
 
-                setGoogleOutput(googleServiceData);
+                setGoogleOutput(googleServiceData, time);
             }
             if (loqateCheckBox.Checked)
             {
+                var startTime = DateTime.UtcNow.TimeOfDay.TotalSeconds;
                 var loqateServiceData = await validation(checkAddressInput, _loqateService);
+                var time = DateTime.UtcNow.TimeOfDay.TotalSeconds - startTime;
 
-                setLoqateOutput(loqateServiceData);
+                setLoqateOutput(loqateServiceData, time);
             }
             if (smartyCheckBox.Checked)
             {
                 if (string.IsNullOrEmpty(checkAddressInput.Country))
                 {
-                    inputErrorProvider.SetError(countryTextBox, "Country required for Smarty.");
+                    showNotificatoin("Country required for Smarty.");
 
                     return;
                 }
 
+                var startTime = DateTime.UtcNow.TimeOfDay.TotalSeconds;
                 var smartyServiceData = await validation(checkAddressInput, _smartyService);
+                var time = DateTime.UtcNow.TimeOfDay.TotalSeconds - startTime;
 
-                setSmartyOutput(smartyServiceData);
+                setSmartyOutput(smartyServiceData, time);
             }
             if (hereCheckBox.Checked)
             {
+                var startTime = DateTime.UtcNow.TimeOfDay.TotalSeconds;
                 var hereServiceData = await validation(checkAddressInput, _hereService);
+                var time = DateTime.UtcNow.TimeOfDay.TotalSeconds - startTime;
 
-                setHereOutput(hereServiceData);
+                setHereOutput(hereServiceData, time);
             }
         }
 
-        private async void checkButton_Click(object sender, EventArgs e)
+        private async Task autocomplete()
         {
-            try
-            {
-                this.Cursor = Cursors.WaitCursor;
+            var checkAddressInput = getCheckAddressInput();
 
-                await validation();
-            }
-            catch (Exception ex)
+            requestAddressTextBox.Text = $"{checkAddressInput.FreeInput} {BaseService.getCountryCode(checkAddressInput.Country).ISO2}";
+
+            if (string.IsNullOrEmpty(checkAddressInput.FreeInput))
             {
-                showError(ex);
+                showNotificatoin("Inputs cannot be null.");
+
+                return;
             }
 
-            this.Cursor = Cursors.Arrow;
+            if (googleMapsCheckBox.Checked)
+            {
+                var startTime = DateTime.UtcNow.TimeOfDay.TotalSeconds;
+                var googleServiceData = await autocomplete(checkAddressInput, _googleService);
+                var time = DateTime.UtcNow.TimeOfDay.TotalSeconds - startTime;
+
+                setGoogleOutput(googleServiceData, time);
+            }
+            if (loqateCheckBox.Checked)
+            {
+                var startTime = DateTime.UtcNow.TimeOfDay.TotalSeconds;
+                var loqateServiceData = await autocomplete(checkAddressInput, _loqateService);
+                var time = DateTime.UtcNow.TimeOfDay.TotalSeconds - startTime;
+
+                setLoqateOutput(loqateServiceData, time);
+            }
+            if (smartyCheckBox.Checked)
+            {
+                if (string.IsNullOrEmpty(checkAddressInput.Country))
+                {
+                    showNotificatoin("Country required for Smarty.");
+
+                    return;
+                }
+
+                var startTime = DateTime.UtcNow.TimeOfDay.TotalSeconds;
+                var smartyServiceData = await autocomplete(checkAddressInput, _smartyService);
+                var time = DateTime.UtcNow.TimeOfDay.TotalSeconds - startTime;
+
+                setSmartyOutput(smartyServiceData, time);
+            }
+            if (hereCheckBox.Checked)
+            {
+                var startTime = DateTime.UtcNow.TimeOfDay.TotalSeconds;
+                var hereServiceData = await autocomplete(checkAddressInput, _hereService);
+                var time = DateTime.UtcNow.TimeOfDay.TotalSeconds - startTime;
+
+                setHereOutput(hereServiceData, time);
+            }
+        }
+
+        private async Task autosuggest()
+        {
+            var checkAddressInput = getCheckAddressInput();
+
+            requestAddressTextBox.Text = $"{checkAddressInput.FreeInput} {BaseService.getCountryCode(checkAddressInput.Country).ISO2}";
+
+            if (string.IsNullOrEmpty(checkAddressInput.FreeInput))
+            {
+                showNotificatoin("Inputs cannot be null.");
+
+                return;
+            }
+
+            if (hereCheckBox.Checked && !googleMapsCheckBox.Checked && !smartyCheckBox.Checked && !loqateCheckBox.Checked)
+            {
+                var startTime = DateTime.UtcNow.TimeOfDay.TotalSeconds;
+                var hereServiceData = await autosuggest(checkAddressInput, _hereService);
+                var time = DateTime.UtcNow.TimeOfDay.TotalSeconds - startTime;
+
+                setHereOutput(hereServiceData, time);
+            }
+            else
+            {
+                showNotificatoin("Autosuggest is supported only by Here.");
+            }
         }
 
         private void loqateResponseListBox_SelectedIndexChanged(object sender, EventArgs e)
@@ -600,31 +803,83 @@ namespace CheckAddressApp
             }
         }
 
+        private void inputsChoice_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            clearInputs();
+        }
+
+        private void fromFileInputAddresseslistBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (addressesFromFileListBox.SelectedItem != null)
+            {
+                var selectedTab = inputsChoiceTabControl.SelectedTab.Text;
+                var inputFromFile = _addressesFromFile.FirstOrDefault(i => i.ToString() == addressesFromFileListBox.SelectedItem.ToString());
+
+                if (selectedTab == "Structured Input")
+                {
+                    streetAndHouseNumberTextBox.Text = inputFromFile?.StructuredInput.StreetAndHouseNumber;
+                    postalCodeTextBox.Text = inputFromFile?.StructuredInput.PostalCode;
+                    cityTextBox.Text = inputFromFile?.StructuredInput.City;
+                    districtTextBox.Text = inputFromFile?.StructuredInput.District;
+                    countryTextBox.Text = inputFromFile?.Country;
+                }
+                else
+                {
+                    freeInputTextBox.Text = inputFromFile?.FreeInput;
+                    countryTextBox.Text = inputFromFile?.Country;
+                }
+            }
+        }
+
         private void addressTextBox_TextChanged(object sender, EventArgs e)
         {
-            inputErrorProvider.SetError(inputsChoiceTabControl, "");
+
         }
 
         private void cityTextBox_TextChanged(object sender, EventArgs e)
         {
-            inputErrorProvider.SetError(inputsChoiceTabControl, "");
         }
 
         private void districtTextBox_TextChanged(object sender, EventArgs e)
         {
-            inputErrorProvider.SetError(inputsChoiceTabControl, "");
         }
 
         private void postalCodeTextBox_TextChanged(object sender, EventArgs e)
         {
-            inputErrorProvider.SetError(inputsChoiceTabControl, "");
+
+        }
+
+        private void freeInputTextBox_TextChanged(object sender, EventArgs e)
+        {
+        }
+
+        private void countryTextBox_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void addressesSearchTextBox_TextChanged(object sender, EventArgs e)
+        {
+            var search = addressesSearchTextBox.Text;
+            IEnumerable<CheckAddressInput> addresses;
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                addresses = _addressesFromFile.Where(a => a.ToString().ToLower().Contains(search.ToLower()));
+            }
+            else
+            {
+                addresses = _addressesFromFile;
+            }
+
+            var items = addresses.Select(i => i.ToString());
+
+            addressesFromFileListBox.Items.Clear();
+            addressesFromFileListBox.Items.AddRange(items.ToArray());
         }
 
         private void googleMapsCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            apiChoiceErrorProvider.SetError(apiGroupBox, "");
-            inputErrorProvider.SetError(apiGroupBox, "");
-
             if (googleMapsCheckBox.Checked)
             {
                 if (!apiTabControl.TabPages.Contains(googleMapsTabPage))
@@ -638,21 +893,19 @@ namespace CheckAddressApp
 
                 if (count != 0)
                 {
+                    clearGoogleResponse();
                     apiTabControl.TabPages.Remove(googleMapsTabPage);
                 }
                 else
                 {
                     googleMapsCheckBox.Checked = true;
-                    apiChoiceErrorProvider.SetError(apiGroupBox, "At least one Check Provider should be checked!");
+                    showNotificatoin("At least one Check Provider should be checked!");
                 }
             }
         }
 
         private void loqateCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            apiChoiceErrorProvider.SetError(apiGroupBox, "");
-            inputErrorProvider.SetError(apiGroupBox, "");
-
             if (loqateCheckBox.Checked)
             {
                 if (!apiTabControl.TabPages.Contains(loqateTabPage))
@@ -666,21 +919,19 @@ namespace CheckAddressApp
 
                 if (count != 0)
                 {
+                    clearLoqateResponse();
                     apiTabControl.TabPages.Remove(loqateTabPage);
                 }
                 else
                 {
                     loqateCheckBox.Checked = true;
-                    apiChoiceErrorProvider.SetError(apiGroupBox, "At least one Check Provider should be checked!");
+                    showNotificatoin("At least one Check Provider should be checked!");
                 }
             }
         }
 
         private void smartyCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            apiChoiceErrorProvider.SetError(apiGroupBox, "");
-            inputErrorProvider.SetError(apiGroupBox, "");
-
             if (smartyCheckBox.Checked)
             {
                 if (!apiTabControl.TabPages.Contains(smartyTabPage))
@@ -694,21 +945,19 @@ namespace CheckAddressApp
 
                 if (count != 0)
                 {
+                    clearSmartyResponse();
                     apiTabControl.TabPages.Remove(smartyTabPage);
                 }
                 else
                 {
                     smartyCheckBox.Checked = true;
-                    apiChoiceErrorProvider.SetError(apiGroupBox, "At least one Check Provider should be checked!");
+                    showNotificatoin("At least one Check Provider should be checked!");
                 }
             }
         }
 
         private void hereCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            apiChoiceErrorProvider.SetError(apiGroupBox, "");
-            inputErrorProvider.SetError(apiGroupBox, "");
-
             if (hereCheckBox.Checked)
             {
                 if (!apiTabControl.TabPages.Contains(hereTabPage))
@@ -722,12 +971,13 @@ namespace CheckAddressApp
 
                 if (count != 0)
                 {
+                    clearHereResponse();
                     apiTabControl.TabPages.Remove(hereTabPage);
                 }
                 else
                 {
                     hereCheckBox.Checked = true;
-                    apiChoiceErrorProvider.SetError(apiGroupBox, "At least one Check Provider should be checked!");
+                    showNotificatoin("At least one Check Provider should be checked!");
                 }
             }
         }
@@ -752,17 +1002,6 @@ namespace CheckAddressApp
             clearInputs();
         }
 
-        private void inputsChoice_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            inputErrorProvider.SetError(inputsChoiceTabControl, "");
-            clearInputs();
-        }
-
-        private void freeInputTextBox_TextChanged(object sender, EventArgs e)
-        {
-            inputErrorProvider.SetError(inputsChoiceTabControl, "");
-        }
-
         private void button5_Click(object sender, EventArgs e)
         {
             clearHereResponse();
@@ -784,9 +1023,20 @@ namespace CheckAddressApp
             await loadAddressesFromFile(_addressesFilePath);
         }
 
-        private void countryTextBox_TextChanged(object sender, EventArgs e)
+        private async void checkButton_Click(object sender, EventArgs e)
         {
-            inputErrorProvider.SetError(countryTextBox, "");
+            try
+            {
+                this.Cursor = Cursors.WaitCursor;
+
+                await validation();
+            }
+            catch (Exception ex)
+            {
+                showError(ex);
+            }
+
+            this.Cursor = Cursors.Arrow;
         }
 
         private async void autosuggestButton_Click(object sender, EventArgs e)
@@ -795,25 +1045,7 @@ namespace CheckAddressApp
             {
                 this.Cursor = Cursors.WaitCursor;
 
-                var checkAddressInput = getCheckAddressInput();
-
-                if (string.IsNullOrEmpty(checkAddressInput.FreeInput))
-                {
-                    inputErrorProvider.SetError(inputsChoiceTabControl, "Inputs cannot be null.");
-
-                    return;
-                }
-
-                if (hereCheckBox.Checked)
-                {
-                    var hereServiceData = await autosuggest(checkAddressInput, _hereService);
-
-                    setHereOutput(hereServiceData);
-                }
-                else
-                {
-                    inputErrorProvider.SetError(apiGroupBox, "Autosuggest is supported only by Here.");
-                }
+                await autosuggest();
             }
             catch (Exception ex)
             {
@@ -830,46 +1062,7 @@ namespace CheckAddressApp
             {
                 this.Cursor = Cursors.WaitCursor;
 
-                var checkAddressInput = getCheckAddressInput();
-
-                if (string.IsNullOrEmpty(checkAddressInput.FreeInput))
-                {
-                    inputErrorProvider.SetError(inputsChoiceTabControl, "Inputs cannot be null.");
-
-                    return;
-                }
-
-                if (googleMapsCheckBox.Checked)
-                {
-                    var googleServiceData = await autocomplete(checkAddressInput, _googleService);
-
-                    setGoogleOutput(googleServiceData);
-                }
-                if (loqateCheckBox.Checked)
-                {
-                    var loqateServiceData = await autocomplete(checkAddressInput, _loqateService);
-
-                    setLoqateOutput(loqateServiceData);
-                }
-                if (smartyCheckBox.Checked)
-                {
-                    if (string.IsNullOrEmpty(checkAddressInput.Country))
-                    {
-                        inputErrorProvider.SetError(countryTextBox, "Country required for Smarty.");
-
-                        return;
-                    }
-
-                    var smartyServiceData = await autocomplete(checkAddressInput, _smartyService);
-
-                    setSmartyOutput(smartyServiceData);
-                }
-                if (hereCheckBox.Checked)
-                {
-                    var hereServiceData = await autocomplete(checkAddressInput, _hereService);
-
-                    setHereOutput(hereServiceData);
-                }
+                await autocomplete();
             }
             catch (Exception ex)
             {
@@ -1002,28 +1195,8 @@ namespace CheckAddressApp
                 return;
             }
 
-            _addressesFilePath = openAddressesFileDialog.FileName;
-            await loadAddressesFromFile(_addressesFilePath);
-        }
-
-        private void addressesSearchTextBox_TextChanged(object sender, EventArgs e)
-        {
-            var search = addressesSearchTextBox.Text;
-            IEnumerable<InputFromFile> addresses;
-
-            if (!string.IsNullOrEmpty(search))
-            {
-                addresses = _addressesFromFile.Where(a => a.GetString(true).ToLower().Contains(search.ToLower()));
-            }
-            else
-            {
-                addresses = _addressesFromFile;
-            }
-
-            var items = addresses.Select(i => i.GetString());
-
-            addressesFromFileListBox.Items.Clear();
-            addressesFromFileListBox.Items.AddRange(items.ToArray());
+            var addressesFilePath = openAddressesFileDialog.FileName;
+            await loadAddressesFromFile(addressesFilePath);
         }
 
         private void CheckAddressForm_FormClosing(object sender, FormClosingEventArgs e)

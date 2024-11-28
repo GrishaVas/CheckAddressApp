@@ -1,15 +1,44 @@
-StreetAndHouseNumber,City,District,PostalCode,CountryCode
+StreetAndHouseNumber,City,District,PostalCode,Country
 Offenbachstr. 45,Munchen,,,Germany
 Offenbachstr,Munchen,,,Germany
 Calle Colmenarejo 5,Madrid,,28035,Spain
 Colmenarejo 5,Madrid,,28035,Spain
 Comenareho 5,Madrid,,28035,Spain
+Castelana 6,Madrid,,28046,Spain
+Paseo de la Castellana 6,Madrid,,28046,Spain
+StrandvÃ¤gen 14,Karlsborg,,54632,Sweden
+Groot Hertoginnelaan 18,Den Haag,,2517 EG,Netherlands
 Via San Martino della Battaglia 4,Roma,,,Italy
 Via della Vetrina 14,Roma,,00186,Italy
-Rua Júlio Siqueira 803,Fortaleza,,60135-226,Brazil
-Rua Júlio Siqueira 803,Fortaleza,,,Brazil
+Rua JÃºlio Siqueira 803,Fortaleza,,60135-226,Brazil
+Rua JÃºlio Siqueira 803,Fortaleza,,,Brazil
 ,,,90048,United States
 6222 Wils,Los Angeles,,90048,United States
 16 E 46th Street,New York,,10017,United States
 Park Lane,Liverpool,,,United Kingdom
 46 Russell St,Cambridge,,CB2 1HT,United Kingdom
+Struenseegade 7,Copenhagen,NÃ¸rrebro,2200,Denmark
+H.C. Andersens Boulevard 50,Copenhagen,,1553,Denmark
+5 place de l'Ã©glise,Bioule,,82800,France
+11 Rue ValÃ©ry Meunier,Pau,,64000,France
+10 Rue BeaumarchÃ©,Beaune,,21200,France
+3 Rue de Nerbevaux,Frouard,,54390,France
+5 AllÃ©e Duquesne - Cours Des 50 Otages,Nantes,Centre Ville,44000,France
+7 Salter Street,Stafford,,ST16 2JU,United Kingdom
+Selby Road,Doncaster,,DN8 4JE,United Kingdom
+11 Ramskir Lane,,Doncaster,DN7 5BE,United Kingdom
+ravnsborggade 11,Copenhagen,NÃ¸rrebro,2200,Denmark
+Vandkunsten 5,Copenhagen,,1467,Denmark
+Herholdtsgade 6,Copenhagen,,1605,Denmark
+25-26 Queens Street,Scarborough,,YO11 1HA,United Kingdom
+RAMAL DA IGREJA DA PAZ PROXIMO ACAMPAMENTO CHALON,Alter do Chao,,CEP 69000-000,Brazil
+Queen Victoria Road,Llanelli,,SA15 2TH,United Kingdom
+107900 Overseas Highway,Key Largo,,FL 33037,United States
+527 Caribbean Drive,Key Largo,,FL 33037,United States
+2430 Hulemalu Road,Lihue,,HI 96766,United States
+2277 Historic Route 66,Santa Rosa,,NM 88435,United States
+806 Central Avenue South East,Albuquerque,,NM 87102,United States
+Rua da praia NÂ°2,Gamboa,,CEP 45420-000,Brazil
+Rua Caminho do Farol 01,Morro de SÃ£o Paulo,,CEP 45421-000,Brazil
+Rua 2 Segunda Praia,Morro de SÃ£o Paulo,,CEP 45420-000,Brazil
+Rua Conselheiro Ferraz S/nÂº Centro,ValenÃ§a,ao lado do Banco ItaÃº,CEP 45400-000,Brazil

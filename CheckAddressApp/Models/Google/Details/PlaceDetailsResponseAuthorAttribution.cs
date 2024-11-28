@@ -1,6 +1,6 @@
-﻿namespace CheckAddressApp.Models.Google.PlaceDetails
+﻿namespace CheckAddressApp.Models.Google.Details
 {
-    public class AuthorAttribution
+    public class PlaceDetailsResponseAuthorAttribution
     {
         public string DisplayName { get; set; }
         public string Uri { get; set; }

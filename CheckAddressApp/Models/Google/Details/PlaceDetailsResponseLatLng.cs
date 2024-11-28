@@ -1,6 +1,6 @@
-﻿namespace CheckAddressApp.Models.Google.PlaceDetails
+﻿namespace CheckAddressApp.Models.Google.Details
 {
-    public class LatLng
+    public class PlaceDetailsResponseLatLng
     {
         public double Latitude { get; set; }
         public double Longitude { get; set; }

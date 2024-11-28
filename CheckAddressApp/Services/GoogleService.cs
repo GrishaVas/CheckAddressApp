@@ -1,9 +1,8 @@
 ﻿using CheckAddressApp.Models;
 using CheckAddressApp.Models.Google.Autocomplete;
+using CheckAddressApp.Models.Google.Details;
 using CheckAddressApp.Services.Api;
-using Google.Maps.AddressValidation.V1;
-using Google.Maps.Places.V1;
-using Google.Type;
+using CheckAddressWeb.Models.Google.Validation;
 using Microsoft.Extensions.Configuration;
 
 namespace CheckAddressApp.Services
@@ -18,83 +17,6 @@ namespace CheckAddressApp.Services
                 conf["Google:ClientId"],
                 conf["Google:ClientSecret"],
                 conf["Google:RefreshToken"]);
-        }
-
-        public async Task<Place> GetPlaceDetails(string placeId, string fields)
-        {
-            var place = await _googleAddressApiService.GetPlaceDetails(placeId, fields);
-
-            return place;
-        }
-
-        private List<CheckAddressData> getCheckAddressData(ValidateAddressResponse validateAddressResponse)
-        {
-            if (validateAddressResponse == null)
-            {
-                throw new Exception("Validate address response is null.");
-            }
-
-            var checkAddressDataItem = new CheckAddressData
-            {
-                Address = validateAddressResponse.Result.Address.FormattedAddress,
-                Fields = getFields(validateAddressResponse.Result).ToArray()
-            };
-            var checkAddressData = new List<CheckAddressData>
-            {
-                checkAddressDataItem
-            };
-
-            return checkAddressData;
-        }
-
-        private IEnumerable<CheckAddressField> getFields(ValidationResult validationResult)
-        {
-            var fields = new List<CheckAddressField>();
-
-            fields.AddRange(base.getFields(validationResult.Address));
-            fields.AddRange(base.getFields(validationResult.Geocode));
-            fields.AddRange(base.getFields(validationResult.Metadata));
-
-            var components = validationResult.Address.AddressComponents;
-
-            for (int i = 0; i < components.Count; i++)
-            {
-                fields.AddRange(getFields(components[i]).Select(f => new CheckAddressField
-                {
-                    Name = $"AddressComponents[{i}].{f.Name}",
-                    Value = f.Value
-                }));
-            }
-
-            return fields;
-        }
-        private ValidateAddressRequest getValidationRequest(CheckAddressInput input)
-        {
-            if (input == null)
-            {
-                throw new ArgumentException("Input cannot be null.");
-            }
-
-            var address = new PostalAddress()
-            {
-                RegionCode = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO2 : ""
-            };
-
-            if (input.StructuredInput != null)
-            {
-                address.Locality = input.StructuredInput.City;
-                address.PostalCode = input.StructuredInput.PostalCode;
-                address.Sublocality = input.StructuredInput.District;
-            }
-
-            address.AddressLines.Add(input.FreeInput);
-
-            var addressValidationRequest = new ValidateAddressRequest
-            {
-                Address = address
-            };
-
-            return addressValidationRequest;
         }
 
         public override Task<ServiceData> AutosuggestAddress(CheckAddressInput input)
@@ -126,11 +48,17 @@ namespace CheckAddressApp.Services
 
             foreach (var id in addressIds)
             {
-                var details = await GetPlaceDetails(id, "*");
+                var detailsResponse = await getPlaceDetails(id, "*");
+
+                if (detailsResponse == null)
+                {
+                    throw new Exception("Details address response is null.");
+                }
+
                 var checkAddressDataItem = new CheckAddressData
                 {
-                    Address = details.FormattedAddress,
-                    Fields = getFields(details).ToArray()
+                    Address = detailsResponse.FormattedAddress,
+                    Fields = getFields(detailsResponse).ToArray()
                 };
 
                 checkAddressData.Add(checkAddressDataItem);
@@ -162,6 +90,62 @@ namespace CheckAddressApp.Services
             };
 
             return serviceData;
+        }
+
+        private async Task<PlaceDetailsResponse> getPlaceDetails(string placeId, string fields)
+        {
+            var place = await _googleAddressApiService.GetPlaceDetails(placeId, fields);
+
+            return place;
+        }
+
+        private List<CheckAddressData> getCheckAddressData(ValidateAddressResponse validateAddressResponse)
+        {
+            if (validateAddressResponse == null)
+            {
+                throw new Exception("Validate address response cannot be null.");
+            }
+
+            var checkAddressDataItem = new CheckAddressData
+            {
+                Address = validateAddressResponse.Result?.Address?.FormattedAddress,
+                Fields = getFields(validateAddressResponse.Result).ToArray()
+            };
+            var checkAddressData = new List<CheckAddressData>
+            {
+                checkAddressDataItem
+            };
+
+            return checkAddressData;
+        }
+
+        private ValidateAddressRequest getValidationRequest(CheckAddressInput input)
+        {
+            if (input == null)
+            {
+                throw new ArgumentException("Input cannot be null.");
+            }
+
+            var address = new ValidateAddressRequestPostalAddress()
+            {
+                RegionCode = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO2 : ""
+            };
+
+            if (input.StructuredInput != null)
+            {
+                address.Locality = input.StructuredInput.City;
+                address.PostalCode = input.StructuredInput.PostalCode;
+                address.Sublocality = input.StructuredInput.District;
+            }
+
+            address.AddressLines = [input.FreeInput];
+
+            var addressValidationRequest = new ValidateAddressRequest
+            {
+                Address = address
+            };
+
+            return addressValidationRequest;
         }
     }
 }

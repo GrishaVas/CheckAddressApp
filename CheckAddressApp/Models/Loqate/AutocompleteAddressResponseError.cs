@@ -1,4 +1,6 @@
-﻿namespace CheckAddressApp.Models.Loqate
+﻿using System.Collections.Generic;
+
+namespace CheckAddressApp.Models.Loqate
 {
     public class AutocompleteAddressResponseError
     {

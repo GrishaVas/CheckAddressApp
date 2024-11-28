@@ -6,19 +6,13 @@
     <Nullable>disable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <FileVersion>15</FileVersion>
-    <AssemblyVersion>15</AssemblyVersion>
+    <FileVersion>18</FileVersion>
+    <AssemblyVersion>18</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Maps.AddressValidation.V1" Version="1.4.0" />
-    <PackageReference Include="Google.Maps.Places.V1" Version="1.0.0-beta09" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
     <PackageReference Include="smartystreets-dotnet-sdk" Version="8.18.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Controls\Controls.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,9 +25,6 @@
 
   <ItemGroup>
     <None Update="addresses.csv">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="application_default_credentials.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="configuration.json">

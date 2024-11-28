@@ -158,26 +158,5 @@ namespace CheckAddressApp.Services
 
             return lookup;
         }
-
-        private IEnumerable<CheckAddressField> getFields(SmartyStreets.InternationalStreetApi.Candidate candidate)
-        {
-            var fields = new List<CheckAddressField>();
-
-            fields.AddRange(base.getFields(candidate));
-
-            fields.AddRange(base.getFields(candidate.Components, "Components"));
-
-            return fields;
-        }
-        private IEnumerable<CheckAddressField> getFields(SmartyStreets.USStreetApi.Candidate candidate)
-        {
-            var fields = new List<CheckAddressField>();
-
-            fields.AddRange(base.getFields(candidate));
-
-            fields.AddRange(base.getFields(candidate.Components, "Components"));
-
-            return fields;
-        }
     }
 }

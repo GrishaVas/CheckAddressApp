@@ -4,7 +4,7 @@ namespace CheckAddressApp.Services
 {
     public abstract class BaseService
     {
-        private Dictionary<string, (string ISO2, string ISO3)> _countries = new Dictionary<string, (string ISO2, string ISO3)>
+        private static Dictionary<string, (string ISO2, string ISO3)> _countries = new Dictionary<string, (string ISO2, string ISO3)>
         {
             {"united states",("US","USA")},
             {"slovakia",("SK","SVK")},
@@ -51,49 +51,92 @@ namespace CheckAddressApp.Services
         public abstract Task<ServiceData> AutocompleteAddress(CheckAddressInput input);
         public abstract Task<ServiceData> ValidateAddress(CheckAddressInput input);
 
-        protected virtual IEnumerable<CheckAddressField> getFields(object match, string ownerName = null)
+        protected virtual IEnumerable<CheckAddressField> getFields(object @object, string name = null)
         {
-            if (match == null)
+            if (@object == null)
             {
                 return [];
             }
 
-            var fields = new List<CheckAddressField>();
-            var props = match.GetType()
-                .GetProperties();
 
-            foreach (var prop in props)
+            var objectType = @object.GetType();
+
+            if (objectType.GetInterface("IList") != null)
             {
-                if (prop.PropertyType.IsValueType || prop.PropertyType == typeof(string))
-                {
-                    var propValue = prop.GetValue(match);
-                    var propString = propValue?.ToString();
-                    if (!string.IsNullOrEmpty(propString))
-                    {
-                        var checkAddressField = new CheckAddressField()
-                        {
-                            Name = $"{(string.IsNullOrEmpty(ownerName) ? "" : $"{ownerName}.")}{prop.Name}",
-                            Value = propString
-                        };
+                var elements = getArrayElements(@object);
+                var fields = new List<CheckAddressField>();
 
-                        fields.Add(checkAddressField);
-                    }
+                for (var i = 0; i < elements.Count; i++)
+                {
+                    var elementFields = getFields(elements[i], $"{name}[{i}]");
+
+                    fields.AddRange(elementFields);
                 }
+
+                return fields;
             }
 
-            return fields;
+            if ((objectType.IsValueType || objectType == typeof(string)) && @object != null)
+            {
+                var propString = @object.ToString();
+                var checkAddressField = new CheckAddressField()
+                {
+                    Name = $"{name}",
+                    Value = propString
+                };
+
+                return [checkAddressField];
+            }
+
+            if (objectType.IsClass)
+            {
+                var props = objectType.GetProperties();
+                var fields = new List<CheckAddressField>();
+                name = string.IsNullOrEmpty(name) ? "" : $"{name}.";
+
+                foreach (var prop in props)
+                {
+                    var value = prop.GetValue(@object);
+                    var objectFields = getFields(value, $"{name}{prop.Name}");
+
+                    fields.AddRange(objectFields);
+                }
+
+                return fields;
+            }
+
+            return [];
         }
 
-        protected (string ISO2, string ISO3) getCountryCode(string country)
+        public static (string ISO2, string ISO3) getCountryCode(string country)
         {
             var lowerCaseCountry = country.ToLower();
 
             if (!_countries.Keys.Contains(lowerCaseCountry))
             {
-                throw new Exception("Country does not exists.");
+                return ("", "");
             }
 
             return _countries[lowerCaseCountry];
+        }
+
+        private List<object> getArrayElements(object array)
+        {
+            var iListType = typeof(IList<>).MakeGenericType(typeof(object));
+            var iCollectionType = typeof(ICollection<>).MakeGenericType(typeof(object));
+            var countProp = iCollectionType.GetProperty("Count");
+            var count = (int)countProp.GetValue(array);
+            var getItemMethod = iListType.GetMethod("get_Item");
+            var elements = new List<object>();
+
+            for (int i = 0; i < count; i++)
+            {
+                var element = getItemMethod.Invoke(array, [i]);
+
+                elements.Add(element);
+            }
+
+            return elements;
         }
     }
 }

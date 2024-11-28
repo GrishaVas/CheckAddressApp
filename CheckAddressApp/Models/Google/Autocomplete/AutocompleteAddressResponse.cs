@@ -1,4 +1,6 @@
-﻿namespace CheckAddressApp.Models.Google.Autocomplete
+﻿using System.Collections.Generic;
+
+namespace CheckAddressApp.Models.Google.Autocomplete
 {
     public class AutocompleteAddressResponse
     {

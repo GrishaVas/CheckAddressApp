@@ -58,6 +58,11 @@ namespace CheckAddressApp.Services.Api
 
         private string getLookupUrl(LookupAddressRequest request)
         {
+            if (request == null)
+            {
+                throw new Exception("Lookup address request cannot be null.");
+            }
+
             var url = "https://lookup.search.hereapi.com/v1/lookup";
 
             url += $"?apiKey={_apiKey}" +
@@ -68,6 +73,11 @@ namespace CheckAddressApp.Services.Api
 
         private string getValidationUrl(ValidateAddressRequest request)
         {
+            if (request == null)
+            {
+                throw new Exception("Validation address request cannot be null.");
+            }
+
             var url = "https://geocode.search.hereapi.com/v1/geocode";
 
             url += $"?apiKey={_apiKey}" +
@@ -79,6 +89,11 @@ namespace CheckAddressApp.Services.Api
 
         private string getAutocompleteUrl(AutocompleteAddressRequest request)
         {
+            if (request == null)
+            {
+                throw new Exception("Autocomplete address request cannot be null.");
+            }
+
             var url = "https://autocomplete.search.hereapi.com/v1/autocomplete";
 
             url += $"?apiKey={_apiKey}" +
@@ -90,6 +105,11 @@ namespace CheckAddressApp.Services.Api
 
         private string getAutosuggestUrl(AutosuggestAddressRequest request)
         {
+            if (request == null)
+            {
+                throw new Exception("Autosuggest address request cannot be null.");
+            }
+
             var url = "https://autosuggest.search.hereapi.com/v1/autosuggest";
 
             url += $"?apiKey={_apiKey}" +

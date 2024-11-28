@@ -1,4 +1,6 @@
-﻿namespace CheckAddressApp.Models
+﻿using System.Text;
+
+namespace CheckAddressApp.Models
 {
     public class StructuredInput
     {
@@ -13,6 +15,32 @@
                 (City != "" ? $"{City} " : "") +
                 (District != "" ? $"{District} " : "") +
                 (StreetAndHouseNumber != "" ? $"{StreetAndHouseNumber} " : "");
+        }
+
+        public string ToString(string format)
+        {
+            var strBuilder = new StringBuilder(format)
+                .Replace("$PostalCode", PostalCode != "" ? $"{PostalCode}" : "")
+                .Replace("$City", City != "" ? $"{City}" : "")
+                .Replace("$District", District != "" ? $"{District}" : "")
+                .Replace("$StreetAndHouseNumber", StreetAndHouseNumber != "" ? $"{StreetAndHouseNumber}" : "");
+
+            var index = 0;
+
+            for (int i = 0; i < strBuilder.Length; i++)
+            {
+                if (strBuilder[i] != ' ')
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            strBuilder.Remove(0, index);
+
+            var result = strBuilder.ToString();
+
+            return result;
         }
     }
 }

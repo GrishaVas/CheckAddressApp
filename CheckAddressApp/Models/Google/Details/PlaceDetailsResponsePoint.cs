@@ -1,10 +1,8 @@
-﻿using Google.Type;
-
-namespace CheckAddressApp.Models.Google.PlaceDetails
+﻿namespace CheckAddressApp.Models.Google.Details
 {
-    public class Point
+    public class PlaceDetailsResponsePoint
     {
-        public Date Date { get; set; }
+        public PlaceDetailsDate Date { get; set; }
         public bool Truncated { get; set; }
         public int Day { get; set; }
         public int Hour { get; set; }

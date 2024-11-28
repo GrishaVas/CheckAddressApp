@@ -1,6 +1,6 @@
-﻿namespace CheckAddressApp.Models.Google.PlaceDetails
+﻿namespace CheckAddressWeb.Models.Google.Validation
 {
-    public class PlusCode
+    public class ValidateAddressResponsePlusCode
     {
         public string GlobalCode { get; set; }
         public string CompoundCode { get; set; }
