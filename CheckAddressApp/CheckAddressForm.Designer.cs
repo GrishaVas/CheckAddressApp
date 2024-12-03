@@ -129,7 +129,6 @@
             streetAndHouseNumberTextBox.Name = "streetAndHouseNumberTextBox";
             streetAndHouseNumberTextBox.Size = new Size(258, 27);
             streetAndHouseNumberTextBox.TabIndex = 0;
-            streetAndHouseNumberTextBox.TextChanged += addressTextBox_TextChanged;
             // 
             // label1
             // 
@@ -156,7 +155,6 @@
             cityTextBox.Name = "cityTextBox";
             cityTextBox.Size = new Size(189, 27);
             cityTextBox.TabIndex = 7;
-            cityTextBox.TextChanged += cityTextBox_TextChanged;
             // 
             // label3
             // 
@@ -182,7 +180,6 @@
             postalCodeTextBox.Name = "postalCodeTextBox";
             postalCodeTextBox.Size = new Size(113, 27);
             postalCodeTextBox.TabIndex = 13;
-            postalCodeTextBox.TextChanged += postalCodeTextBox_TextChanged;
             // 
             // label7
             // 
@@ -208,7 +205,6 @@
             districtTextBox.Name = "districtTextBox";
             districtTextBox.Size = new Size(182, 27);
             districtTextBox.TabIndex = 16;
-            districtTextBox.TextChanged += districtTextBox_TextChanged;
             // 
             // button1
             // 
@@ -772,7 +768,6 @@
             countryTextBox.Name = "countryTextBox";
             countryTextBox.Size = new Size(125, 27);
             countryTextBox.TabIndex = 49;
-            countryTextBox.TextChanged += countryTextBox_TextChanged;
             // 
             // inputsChoiceTabControl
             // 
@@ -821,7 +816,6 @@
             freeInputTextBox.Name = "freeInputTextBox";
             freeInputTextBox.Size = new Size(357, 27);
             freeInputTextBox.TabIndex = 2;
-            freeInputTextBox.TextChanged += freeInputTextBox_TextChanged;
             // 
             // label10
             // 

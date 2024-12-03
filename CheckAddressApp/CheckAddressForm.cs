@@ -1,10 +1,10 @@
 using System.Reflection;
-using System.Text.RegularExpressions;
 using CheckAddressApp.Models;
 using CheckAddressApp.Services;
 using Microsoft.Extensions.Configuration;
 using qAcProviderTest;
 using qAcProviderTest.Properties;
+using qAcProviderTest.Services;
 
 namespace CheckAddressApp
 {
@@ -28,7 +28,6 @@ namespace CheckAddressApp
         private IEnumerable<CheckAddressInput> _addressesFromFile;
 
         private IConfiguration _conf;
-        private List<CheckBox> _apiCheckBoxes;
         private IEnumerable<Button> _buttonsToControlAddressesFromFile;
         private string _addressesFilePath = "addresses.csv";
         private string _oneLineInputFormat;
@@ -45,13 +44,6 @@ namespace CheckAddressApp
 
             InitializeComponent();
 
-            _apiCheckBoxes = new List<CheckBox>
-            {
-                hereCheckBox,
-                smartyCheckBox,
-                googleMapsCheckBox,
-                loqateCheckBox,
-            };
             _buttonsToControlAddressesFromFile = new List<Button>
             {
                 insertAddressButton,
@@ -82,44 +74,42 @@ namespace CheckAddressApp
             hereCheckBox.Enabled = enableHere;
             loqateCheckBox.Enabled = enableLoqate;
             smartyCheckBox.Enabled = enableSmarty;
-
-            var firstCheckBox = _apiCheckBoxes.Where(ch => ch.Enabled).FirstOrDefault();
-
-            if (firstCheckBox != null)
-            {
-                firstCheckBox.Checked = true;
-            }
         }
 
-        private async Task loadAddressesFromFile(string path)
+        private async Task<IEnumerable<CheckAddressInput>> getAddressesFromCsv(string path)
         {
-            if (File.Exists(path))
+            IEnumerable<CheckAddressInput> checkAddressInputs;
+
+            try
             {
-                var stream = File.OpenRead(path);
-                var inputFileStr = "";
+                var csvCheckAddressInputSerializer = new CsvCheckAddressInputSerializer(_oneLineInputFormat);
 
-                using (var reader = new StreamReader(stream))
-                {
-                    inputFileStr = await reader.ReadToEndAsync();
-                }
-
-                var inputsFromFile = getInputsFromFile(inputFileStr);
-
-                if (inputsFromFile == null)
-                {
-                    return;
-                }
-
-                _addressesFromFile = inputsFromFile;
-
-                var items = _addressesFromFile.Select(i => i.ToString());
-
-                addressesFromFileListBox.Items.Clear();
-                addressesFromFileListBox.Items.AddRange(items.ToArray());
-
-                addressesFileNameTextBox.Text = path;
-                _addressesFilePath = path;
+                checkAddressInputs = await csvCheckAddressInputSerializer.getCheckAddressInputsFromCsvFile(path);
             }
+            catch (Exception ex)
+            {
+                showNotificatoin(ex.Message);
+                checkAddressInputs = [];
+            }
+
+            return checkAddressInputs;
+        }
+
+        private void setAddresses(IEnumerable<CheckAddressInput> inputs, string fileName)
+        {
+            _addressesFromFile = inputs;
+            _addressesFilePath = fileName;
+
+            var addresses = inputs.Select(a => a.ToString()).ToArray();
+
+            updateAddressesFromFileListBox(addresses, fileName);
+        }
+
+        private void updateAddressesFromFileListBox(string[] addresses, string fileName)
+        {
+            addressesFileNameTextBox.Text = fileName;
+            addressesFromFileListBox.Items.Clear();
+            addressesFromFileListBox.Items.AddRange(addresses);
         }
 
         private void clearGoogleResponse()
@@ -258,6 +248,7 @@ namespace CheckAddressApp
                     $"Stack trace: {ex.StackTrace}";
             }
         }
+
         private void showNotificatoin(string message)
         {
             if (_userNotificationForm == null)
@@ -280,120 +271,6 @@ namespace CheckAddressApp
             {
                 errorRichTextBox.Text = message;
             }
-        }
-
-        private CheckAddressInput getCheckAddressInput(InputFromFile inputFromFile, string oneLineFormat)
-        {
-            var checkAddressInput = new CheckAddressInput
-            {
-                Country = inputFromFile.Country,
-                StructuredInput = new StructuredInput
-                {
-                    City = inputFromFile.City,
-                    District = inputFromFile.District,
-                    PostalCode = inputFromFile.PostalCode,
-                    StreetAndHouseNumber = inputFromFile.StreetAndHouseNumber
-                }
-            };
-
-            checkAddressInput.FreeInput = checkAddressInput.StructuredInput.ToString(oneLineFormat);
-
-            return checkAddressInput;
-        }
-
-        private List<CheckAddressInput> getInputsFromFile(string inputFileStr)
-        {
-            var inputsFromFile = new List<CheckAddressInput>();
-            const string rowsSep = "\r\n";
-            const char wordsSep = ',';
-            var rows = inputFileStr.Split(rowsSep, StringSplitOptions.RemoveEmptyEntries);
-
-            if (rows.Length < 1)
-            {
-                showNotificatoin("Csv file is empty.");
-
-                return null;
-            }
-
-            string errorMessage;
-            var iscsvValid = isCsvValid(inputFileStr, rows[0], out errorMessage);
-
-            if (!iscsvValid)
-            {
-                showNotificatoin(errorMessage);
-
-                return null;
-            }
-
-            var propNames = rows[0].Split(wordsSep);
-
-            foreach (var row in rows.Skip(1))
-            {
-                var values = row.Split(wordsSep);
-                var inputFromFile = getInputFromFile(propNames, values);
-
-                if (inputFromFile != null)
-                {
-                    var chechAddressInput = getCheckAddressInput(inputFromFile, _oneLineInputFormat);
-
-                    inputsFromFile.Add(chechAddressInput);
-                }
-            }
-
-            return inputsFromFile;
-        }
-
-        private bool isCsvValid(string csvText, string csvHeadRow, out string errorMessage)
-        {
-            var regex = new Regex(@"\A([^,\r\n]+,)+[^,\r\n]+\z");
-            var isHeadRowValid = regex.IsMatch(csvHeadRow);
-
-            if (!isHeadRowValid)
-            {
-                errorMessage = "The csv header row is not valid.";
-
-                return false;
-            }
-
-            var delimetersCount = csvHeadRow.Count(c => c == ',');
-            regex = new Regex(@"\A([^,\n]+,)+[^,\n]+(\n|\z)((([^,\n]*,[^,\n]*){" + delimetersCount + @"}(\n|\z))*\z)");
-            var iscsvTextValid = regex.IsMatch(csvText);
-
-            if (!iscsvTextValid)
-            {
-                errorMessage = "The csv is not valid.";
-
-                return false;
-            }
-
-            errorMessage = null;
-            return true;
-        }
-
-        private InputFromFile getInputFromFile(string[] propNames, string[] values)
-        {
-            var inputFormFile = new InputFromFile();
-            var inputFormFileType = typeof(InputFromFile);
-            var inputFormFileProps = inputFormFileType.GetProperties();
-            var mathcesCount = inputFormFileProps.Where(p => propNames.Contains(p.Name)).Count();
-
-            if (mathcesCount == 0)
-            {
-                return null;
-            }
-
-
-            for (int i = 0; i < propNames.Length; i++)
-            {
-                var prop = inputFormFileProps.FirstOrDefault(p => p.Name == propNames[i]);
-
-                if (prop != null)
-                {
-                    prop.SetValue(inputFormFile, values[i]);
-                }
-            }
-
-            return inputFormFile;
         }
 
         private void setGoogleOutput(ServiceData output, double time)
@@ -532,6 +409,11 @@ namespace CheckAddressApp
                 return;
             }
 
+            if (!googleMapsCheckBox.Checked && !loqateCheckBox.Checked && !smartyCheckBox.Checked && !hereCheckBox.Checked)
+            {
+                showNotificatoin("At least one Check Provider should be checked!");
+            }
+
             if (googleMapsCheckBox.Checked)
             {
                 var startTime = DateTime.UtcNow.TimeOfDay.TotalSeconds;
@@ -586,6 +468,11 @@ namespace CheckAddressApp
                 return;
             }
 
+            if (!googleMapsCheckBox.Checked && !loqateCheckBox.Checked && !smartyCheckBox.Checked && !hereCheckBox.Checked)
+            {
+                showNotificatoin("At least one Check Provider should be checked!");
+            }
+
             if (googleMapsCheckBox.Checked)
             {
                 var startTime = DateTime.UtcNow.TimeOfDay.TotalSeconds;
@@ -638,6 +525,11 @@ namespace CheckAddressApp
                 showNotificatoin("Inputs cannot be null.");
 
                 return;
+            }
+
+            if (!googleMapsCheckBox.Checked && !loqateCheckBox.Checked && !smartyCheckBox.Checked && !hereCheckBox.Checked)
+            {
+                showNotificatoin("At least one Check Provider should be checked!");
             }
 
             if (hereCheckBox.Checked && !googleMapsCheckBox.Checked && !smartyCheckBox.Checked && !loqateCheckBox.Checked)
@@ -831,33 +723,6 @@ namespace CheckAddressApp
             }
         }
 
-        private void addressTextBox_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void cityTextBox_TextChanged(object sender, EventArgs e)
-        {
-        }
-
-        private void districtTextBox_TextChanged(object sender, EventArgs e)
-        {
-        }
-
-        private void postalCodeTextBox_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void freeInputTextBox_TextChanged(object sender, EventArgs e)
-        {
-        }
-
-        private void countryTextBox_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
         private void addressesSearchTextBox_TextChanged(object sender, EventArgs e)
         {
             var search = addressesSearchTextBox.Text;
@@ -889,18 +754,8 @@ namespace CheckAddressApp
             }
             else
             {
-                var count = _apiCheckBoxes.Count(cb => cb.Checked);
-
-                if (count != 0)
-                {
-                    clearGoogleResponse();
-                    apiTabControl.TabPages.Remove(googleMapsTabPage);
-                }
-                else
-                {
-                    googleMapsCheckBox.Checked = true;
-                    showNotificatoin("At least one Check Provider should be checked!");
-                }
+                clearGoogleResponse();
+                apiTabControl.TabPages.Remove(googleMapsTabPage);
             }
         }
 
@@ -915,18 +770,8 @@ namespace CheckAddressApp
             }
             else
             {
-                var count = _apiCheckBoxes.Count(cb => cb.Checked);
-
-                if (count != 0)
-                {
-                    clearLoqateResponse();
-                    apiTabControl.TabPages.Remove(loqateTabPage);
-                }
-                else
-                {
-                    loqateCheckBox.Checked = true;
-                    showNotificatoin("At least one Check Provider should be checked!");
-                }
+                clearLoqateResponse();
+                apiTabControl.TabPages.Remove(loqateTabPage);
             }
         }
 
@@ -941,18 +786,8 @@ namespace CheckAddressApp
             }
             else
             {
-                var count = _apiCheckBoxes.Count(cb => cb.Checked);
-
-                if (count != 0)
-                {
-                    clearSmartyResponse();
-                    apiTabControl.TabPages.Remove(smartyTabPage);
-                }
-                else
-                {
-                    smartyCheckBox.Checked = true;
-                    showNotificatoin("At least one Check Provider should be checked!");
-                }
+                clearSmartyResponse();
+                apiTabControl.TabPages.Remove(smartyTabPage);
             }
         }
 
@@ -967,18 +802,8 @@ namespace CheckAddressApp
             }
             else
             {
-                var count = _apiCheckBoxes.Count(cb => cb.Checked);
-
-                if (count != 0)
-                {
-                    clearHereResponse();
-                    apiTabControl.TabPages.Remove(hereTabPage);
-                }
-                else
-                {
-                    hereCheckBox.Checked = true;
-                    showNotificatoin("At least one Check Provider should be checked!");
-                }
+                clearHereResponse();
+                apiTabControl.TabPages.Remove(hereTabPage);
             }
         }
 
@@ -1005,22 +830,6 @@ namespace CheckAddressApp
         private void button5_Click(object sender, EventArgs e)
         {
             clearHereResponse();
-        }
-
-        private async void CheckAddressForm_Load(object sender, EventArgs e)
-        {
-            Size = Settings.Default.FormSize;
-            Location = Settings.Default.FormLocation;
-
-            countryTextBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
-
-            apiTabControl.TabPages.Remove(googleMapsTabPage);
-            apiTabControl.TabPages.Remove(loqateTabPage);
-            apiTabControl.TabPages.Remove(smartyTabPage);
-            apiTabControl.TabPages.Remove(hereTabPage);
-
-            showApi(_conf);
-            await loadAddressesFromFile(_addressesFilePath);
         }
 
         private async void checkButton_Click(object sender, EventArgs e)
@@ -1095,7 +904,8 @@ namespace CheckAddressApp
                 };
 
                 await insertIntoAddressesFileAt(_addressesFilePath, inputFromFile, 0);
-                await loadAddressesFromFile(_addressesFilePath);
+                var inputs = await getAddressesFromCsv(_addressesFilePath);
+                setAddresses(inputs, _addressesFilePath);
             }
 
             foreach (var button in _buttonsToControlAddressesFromFile)
@@ -1133,7 +943,8 @@ namespace CheckAddressApp
                 };
 
                 await insertIntoAddressesFileAt(_addressesFilePath, inputFromFile, selectedIndex);
-                await loadAddressesFromFile(_addressesFilePath);
+                var inputs = await getAddressesFromCsv(_addressesFilePath);
+                setAddresses(inputs, _addressesFilePath);
             }
 
             foreach (var button in _buttonsToControlAddressesFromFile)
@@ -1156,7 +967,8 @@ namespace CheckAddressApp
             if (addressesFromFileListBox.SelectedItem != null)
             {
                 await removeFromAddressesFileAt(_addressesFilePath, addressesFromFileListBox.SelectedIndex);
-                await loadAddressesFromFile(_addressesFilePath);
+                var inputs = await getAddressesFromCsv(_addressesFilePath);
+                setAddresses(inputs, _addressesFilePath);
             }
             foreach (var button in _buttonsToControlAddressesFromFile)
             {
@@ -1196,7 +1008,8 @@ namespace CheckAddressApp
             }
 
             var addressesFilePath = openAddressesFileDialog.FileName;
-            await loadAddressesFromFile(addressesFilePath);
+            var inputs = await getAddressesFromCsv(addressesFilePath);
+            setAddresses(inputs, addressesFilePath);
         }
 
         private void CheckAddressForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -1204,6 +1017,24 @@ namespace CheckAddressApp
             Settings.Default.FormSize = Size;
             Settings.Default.FormLocation = Location;
             Settings.Default.Save();
+        }
+
+        private async void CheckAddressForm_Load(object sender, EventArgs e)
+        {
+            Size = Settings.Default.FormSize;
+            Location = Settings.Default.FormLocation;
+
+            countryTextBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
+
+            apiTabControl.TabPages.Remove(googleMapsTabPage);
+            apiTabControl.TabPages.Remove(loqateTabPage);
+            apiTabControl.TabPages.Remove(smartyTabPage);
+            apiTabControl.TabPages.Remove(hereTabPage);
+
+            showApi(_conf);
+
+            var inputs = await getAddressesFromCsv(_addressesFilePath);
+            setAddresses(inputs, _addressesFilePath);
         }
     }
 }
