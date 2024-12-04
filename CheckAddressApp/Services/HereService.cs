@@ -39,11 +39,18 @@ namespace CheckAddressApp.Services
             foreach (var item in hereValidateResponseItems.Take(5))
             {
                 var hereAutosuggestResponse = await getAutosuggestAddress(input.FreeInput, countryCode, item.Position);
-                var checkAddressDataItems = getCheckAddressData(hereAutosuggestResponse);
+                var ids = hereAutosuggestResponse.Items.Select(i => i.Id);
 
-                if (checkAddressDataItems != null)
+                foreach (var id in ids)
                 {
-                    checkAddressData.AddRange(checkAddressDataItems);
+                    var hereLookupRequest = new LookupAddressRequest(id);
+                    var hereLookupResponse = await _hereAddressApiService.LookupAddress(hereLookupRequest);
+                    var checkAddressDataItem = getCheckAddressData(hereLookupResponse);
+
+                    if (checkAddressDataItem != null)
+                    {
+                        checkAddressData.Add(checkAddressDataItem);
+                    }
                 }
             }
 
@@ -123,6 +130,37 @@ namespace CheckAddressApp.Services
             _hereAddressApiService.Dispose();
 
             GC.SuppressFinalize(this);
+        }
+
+        private async Task<IEnumerable<LookupAddressResponse>> getLookupResponses(string[] ids)
+        {
+            var responses = new List<LookupAddressResponse>();
+
+            foreach (var id in ids)
+            {
+                var hereLookupRequest = new LookupAddressRequest(id);
+                var hereLookupResponse = await _hereAddressApiService.LookupAddress(hereLookupRequest);
+
+                responses.Add(hereLookupResponse);
+            }
+
+            return responses;
+        }
+
+        private CheckAddressData getCheckAddressData(LookupAddressResponse lookupAddresResponse)
+        {
+            if (lookupAddresResponse == null)
+            {
+                throw new Exception("Lookup address response is null.");
+            }
+
+            var checkAddressData = new CheckAddressData
+            {
+                Address = lookupAddresResponse.Address.Label,
+                Fields = getFields(lookupAddresResponse).ToArray()
+            };
+
+            return checkAddressData;
         }
 
         private IEnumerable<CheckAddressData> getCheckAddressData(ValidateAddressResponse validateAddresResponse)
