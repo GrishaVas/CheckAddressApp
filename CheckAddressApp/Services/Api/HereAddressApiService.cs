@@ -44,6 +44,7 @@ namespace CheckAddressApp.Services.Api
         {
             var url = getAutosuggestUrl(request);
             var response = await _httpClient.GetAsync(url);
+            var str = await response.Content.ReadAsStringAsync();
             var result = await getResult<AutosuggestAddressResponse>(response);
 
             return result;

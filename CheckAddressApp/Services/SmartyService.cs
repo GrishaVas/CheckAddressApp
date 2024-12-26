@@ -22,7 +22,7 @@ namespace CheckAddressApp.Services
                 throw new ArgumentException("Input cannot be null.");
             }
 
-            var countryCode = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO2 : null;
+            var countryCode = input.Country != null ? input.Country.TwoLetterCode : "";
             IEnumerable<CheckAddressData> checkAddressData;
 
             if (countryCode == "US")
@@ -42,7 +42,7 @@ namespace CheckAddressApp.Services
             {
                 var lookup = new SmartyStreets.InternationalAutocompleteApi.Lookup(input.FreeInput)
                 {
-                    Country = countryCode
+                    Country = input.Country.TwoLetterCode
                 };
 
                 _smartyAddressApiService.AutocompleteAddress(lookup);
@@ -79,7 +79,7 @@ namespace CheckAddressApp.Services
             }
 
             IEnumerable<CheckAddressData> checkAddressData;
-            var countryCode = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO2 : null;
+            var countryCode = input.Country != null ? input.Country.TwoLetterCode : "";
 
             if (countryCode == "US")
             {
@@ -145,8 +145,7 @@ namespace CheckAddressApp.Services
                 throw new ArgumentException("Input cannot be null.");
             }
 
-            var countryCode = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO2 : null;
-            var lookup = new SmartyStreets.InternationalStreetApi.Lookup(input.FreeInput, countryCode);
+            var lookup = new SmartyStreets.InternationalStreetApi.Lookup(input.FreeInput, input.Country.TwoLetterCode);
 
             if (input.StructuredInput != null)
             {

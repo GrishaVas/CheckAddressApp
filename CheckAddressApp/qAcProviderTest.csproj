@@ -6,11 +6,13 @@
     <Nullable>disable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <FileVersion>19</FileVersion>
-    <AssemblyVersion>19</AssemblyVersion>
+    <FileVersion>21</FileVersion>
+    <AssemblyVersion>21</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="33.0.1" />
+    <PackageReference Include="ISO3166" Version="1.0.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
     <PackageReference Include="smartystreets-dotnet-sdk" Version="8.18.1" />
   </ItemGroup>

@@ -1,8 +1,8 @@
 ﻿namespace CheckAddressApp.Models.Loqate
 {
-    public class AutocompleteAddressResponseErrorItem
+    public class AddressResponseErrorItem
     {
-        public int Number { get; set; }
+        public string Error { get; set; }
         public string Description { get; set; }
         public string Cause { get; set; }
         public string Resolution { get; set; }

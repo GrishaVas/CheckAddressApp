@@ -33,7 +33,7 @@ namespace CheckAddressApp.Services
 
             var request = new AutocompleteAddressRequest(input.FreeInput)
             {
-                RegionCode = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO2 : ""
+                RegionCode = input.Country != null ? input.Country.TwoLetterCode : ""
             };
 
             var autocompleteAddressResponse = await _googleAddressApiService.AutocompleteAddress(request);
@@ -128,7 +128,7 @@ namespace CheckAddressApp.Services
 
             var address = new ValidateAddressRequestPostalAddress()
             {
-                RegionCode = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO2 : ""
+                RegionCode = input.Country != null ? input.Country.TwoLetterCode : ""
             };
 
             if (input.StructuredInput != null)

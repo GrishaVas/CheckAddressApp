@@ -14,7 +14,6 @@ namespace CheckAddressApp.Services.Api
         private string _clientId;
         private string _clientSecret;
         private string _refreshToken;
-        private AccessTokenResponse _accessTokenResponse;
         private const string _validateEndpoint = "https://addressvalidation.googleapis.com/v1:validateAddress";
         private const string _autocompleteEndpoint = "https://places.googleapis.com/v1/places:autocomplete";
         private const string _placeDetailsEndpoint = "https://places.googleapis.com/v1/places/";
@@ -72,6 +71,37 @@ namespace CheckAddressApp.Services.Api
             return placeDetailsResponse;
         }
 
+        protected override async Task<TResult> getResult<TResult>(HttpResponseMessage response)
+        {
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+
+                ErrorResponseRoot error;
+
+                try
+                {
+                    error = await response.Content.ReadFromJsonAsync<ErrorResponseRoot>();
+                }
+                catch
+                {
+                    error = null;
+                }
+
+                if (error != null)
+                {
+                    throw new Exception(error.Error.Message);
+                }
+
+                var contentAsString = await response.Content.ReadAsStringAsync();
+
+                throw new Exception($"Error while receiving response. Status code: {response.StatusCode}. Content: {contentAsString}");
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<TResult>();
+
+            return result;
+        }
+
         private JsonContent getJsonContent<TRequest>(TRequest request)
         {
             if (request == null)
@@ -113,11 +143,6 @@ namespace CheckAddressApp.Services.Api
 
         private async Task<AccessTokenResponse> getAccessToken()
         {
-            if (_accessTokenResponse != null)
-            {
-                return _accessTokenResponse;
-            }
-
             using var httpClient = new HttpClient
             {
                 BaseAddress = new Uri("https://oauth2.googleapis.com/token")

@@ -51,7 +51,7 @@ namespace CheckAddressApp.Services
             {
                 Key = _apiKey,
                 Text = input.FreeInput,
-                Origin = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO2 : null
+                Origin = input.Country != null ? input.Country.TwoLetterCode : ""
             };
             var autocompleteAddressResponse = await _loqateAddressApiService.AutocompleteAddress(autocompleteAddressRequest);
 
@@ -153,7 +153,7 @@ namespace CheckAddressApp.Services
                 throw new ArgumentException("Input cannot be null.");
             }
 
-            var countryCode = !string.IsNullOrEmpty(input.Country) ? getCountryCode(input.Country).ISO2 : null;
+            var countryCode = input.Country != null ? input.Country.TwoLetterCode : "";
             var request = new ValidateAddressRequest
             {
                 Key = _apiKey,

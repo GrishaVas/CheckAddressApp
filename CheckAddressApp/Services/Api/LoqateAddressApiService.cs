@@ -44,7 +44,7 @@ namespace CheckAddressApp.Services.Api
             var jsonContent = JsonContent.Create(request);
             var url = getAutocompleteUrl(request);
             var response = await _httpClient.PostAsync(url, jsonContent);
-            var validateAddressResponses = await getResult(response);
+            var validateAddressResponses = await getAutocompleteAddressResponseResult(response);
 
             return validateAddressResponses;
         }
@@ -71,7 +71,7 @@ namespace CheckAddressApp.Services.Api
 
             var jsonString = await response.Content.ReadAsStringAsync();
             TResult result = null;
-            AutocompleteAddressResponseErrorItem error = null;
+            AddressResponseErrorItem error = null;
 
             try
             {
@@ -79,7 +79,7 @@ namespace CheckAddressApp.Services.Api
             }
             catch (Exception)
             {
-                error = JsonSerializer.Deserialize<AutocompleteAddressResponseErrorItem>(jsonString);
+                error = JsonSerializer.Deserialize<AddressResponseErrorItem>(jsonString);
             }
 
             if (error != null)
@@ -90,7 +90,7 @@ namespace CheckAddressApp.Services.Api
             return result;
         }
 
-        protected async Task<AutocompleteAddressResponse> getResult(HttpResponseMessage response)
+        protected async Task<AutocompleteAddressResponse> getAutocompleteAddressResponseResult(HttpResponseMessage response)
         {
             if (response.StatusCode != HttpStatusCode.OK)
             {
@@ -105,11 +105,20 @@ namespace CheckAddressApp.Services.Api
 
             try
             {
-                result = JsonSerializer.Deserialize<AutocompleteAddressResponse>(jsonString);
+                var autocompleteAddressResponseError = JsonSerializer.Deserialize<AutocompleteAddressResponseError>(jsonString);
+
+                if (!string.IsNullOrEmpty(autocompleteAddressResponseError.Items.FirstOrDefault()?.Error))
+                {
+                    error = autocompleteAddressResponseError;
+                }
+                else
+                {
+                    result = JsonSerializer.Deserialize<AutocompleteAddressResponse>(jsonString);
+                }
             }
             catch (Exception)
             {
-                error = JsonSerializer.Deserialize<AutocompleteAddressResponseError>(jsonString);
+                result = JsonSerializer.Deserialize<AutocompleteAddressResponse>(jsonString);
             }
 
             if (error != null)

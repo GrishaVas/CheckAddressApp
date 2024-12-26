@@ -13,7 +13,7 @@
         public string District { get; set; }
         public string Subdistrict { get; set; }
         public string Street { get; set; }
-        public string Streets { get; set; }
+        public string[] Streets { get; set; }
         public string Block { get; set; }
         public string Subblock { get; set; }
         public string PostalCode { get; set; }
