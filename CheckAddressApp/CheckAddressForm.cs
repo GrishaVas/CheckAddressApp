@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Timers;
 using CheckAddressApp.Models;
 using CheckAddressApp.Services;
 using ISO3166;
@@ -26,6 +27,7 @@ namespace CheckAddressApp
         private IEnumerable<Button> _buttonsToControlAddressesFromFile;
         private string _addressesFilePath = "addresses.csv";
         private string _oneLineInputFormat;
+        private System.Timers.Timer _addressesFromFileSearchTimer;
 
         public CheckAddressForm(IConfiguration conf)
         {
@@ -36,6 +38,15 @@ namespace CheckAddressApp
             _errorForm = new ErrorForm();
             _userNotificationForm = new UserNotificationForm(this);
             _conf = conf;
+
+            _addressesFromFileSearchTimer = new System.Timers.Timer
+            {
+                AutoReset = false,
+                Interval = 1000,
+                SynchronizingObject = this
+            };
+
+            _addressesFromFileSearchTimer.Elapsed += new System.Timers.ElapsedEventHandler(doSearchAddressesFromFile);
 
             InitializeComponent();
 
@@ -130,9 +141,7 @@ namespace CheckAddressApp
         private void updateFromFileListBoxAddresses(string[] addresses, string fileName)
         {
             addressesFileNameTextBox.Text = fileName;
-            addressesFromFileListBox.Items.Clear();
-            addressesFromFileListBox.Items.AddRange(addresses);
-
+            addressesFromFileListBox.Rows = addresses;
             addressesSearchTextBox.Clear();
         }
 
@@ -178,7 +187,9 @@ namespace CheckAddressApp
 
             if (!string.IsNullOrEmpty(countryName))
             {
-                country = Country.List.FirstOrDefault(c => c.Name.ToLower() == countryName.ToLower());
+                country = Country.List.FirstOrDefault(c => c.Name.ToLower() == countryName.ToLower() ||
+                    c.ThreeLetterCode.ToLower() == countryName.ToLower() ||
+                    c.TwoLetterCode.ToLower() == countryName.ToLower());
             }
             else
             {
@@ -644,22 +655,46 @@ namespace CheckAddressApp
 
         private void addressesSearchTextBox_TextChanged(object sender, EventArgs e)
         {
-            var search = addressesSearchTextBox.Text;
-            IEnumerable<CheckAddressInput> addresses;
-
-            if (!string.IsNullOrEmpty(search))
+            if (_addressesFromFileSearchTimer.Enabled)
             {
-                addresses = _addressesFromFile.Where(a => a.ToString().ToLower().Contains(search.ToLower()));
+                return;
             }
             else
             {
-                addresses = _addressesFromFile;
+                _addressesFromFileSearchTimer.Start();
             }
 
-            var items = addresses.Select(i => i.ToString());
+        }
 
-            addressesFromFileListBox.Items.Clear();
-            addressesFromFileListBox.Items.AddRange(items.ToArray());
+        private async void doSearchAddressesFromFile(object source, ElapsedEventArgs e)
+        {
+            await Task.Run(() =>
+            {
+                var search = addressesSearchTextBox.Text;
+                string[] addresses;
+
+                if (!string.IsNullOrEmpty(search))
+                {
+                    addresses = _addressesFromFile.Where(a => a.ToString().ToLower().Contains(search.ToLower())).Select(i => i.ToString()).ToArray();
+                }
+                else
+                {
+                    addresses = _addressesFromFile.Select(i => i.ToString()).ToArray();
+                }
+
+
+                if (this.addressesFromFileListBox.InvokeRequired)
+                {
+                    this.Invoke(() =>
+                    {
+                        addressesFromFileListBox.Rows = addresses.ToArray();
+                    });
+                }
+                else
+                {
+                    addressesFromFileListBox.Rows = addresses.ToArray();
+                }
+            });
         }
 
         private void googleMapsCheckBox_CheckedChanged(object sender, EventArgs e)
@@ -816,7 +851,7 @@ namespace CheckAddressApp
                 var inputFromFile = new InputFromFile
                 {
                     City = input.StructuredInput.City,
-                    Country = input.Country.Name,
+                    Country = input.Country?.Name,
                     StreetAndHouseNumber = input.StructuredInput.StreetAndHouseNumber,
                     District = input.StructuredInput.District,
                     PostalCode = input.StructuredInput.PostalCode
@@ -855,7 +890,7 @@ namespace CheckAddressApp
                 var inputFromFile = new InputFromFile
                 {
                     City = input.StructuredInput.City,
-                    Country = input.Country.Name,
+                    Country = input.Country?.Name,
                     StreetAndHouseNumber = input.StructuredInput.StreetAndHouseNumber,
                     District = input.StructuredInput.District,
                     PostalCode = input.StructuredInput.PostalCode
@@ -949,7 +984,12 @@ namespace CheckAddressApp
 
             countryTextBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
 
-            var countriesNames = ISO3166.Country.List.Select(c => c.Name);
+            var countriesNames = Country.List.Select(c => c.Name);
+            var countriesISO3 = Country.List.Select(c => c.ThreeLetterCode);
+            var countriesISO2 = Country.List.Select(c => c.TwoLetterCode);
+
+            countriesNames = Enumerable.Concat(countriesNames, countriesISO3);
+            countriesNames = Enumerable.Concat(countriesNames, countriesISO2);
 
             countryTextBox.AutoCompleteCustomSource.AddRange(countriesNames.ToArray());
 

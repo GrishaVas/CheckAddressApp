@@ -51,7 +51,7 @@ namespace qAcProviderTest.Services
             var country = ISO3166.Country.List.FirstOrDefault(c => c.Name.ToLower() == inputFromFile.Country.ToLower());
             var checkAddressInput = new CheckAddressInput
             {
-                Country = null,
+                Country = country,
                 StructuredInput = new StructuredInput
                 {
                     City = inputFromFile.City,

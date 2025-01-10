@@ -73,6 +73,11 @@ namespace CheckAddressApp.Services.Api
 
         protected override async Task<TResult> getResult<TResult>(HttpResponseMessage response)
         {
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                throw new Exception($"Provider return Bad Request.");
+            }
+
             if (response.StatusCode != HttpStatusCode.OK)
             {
 

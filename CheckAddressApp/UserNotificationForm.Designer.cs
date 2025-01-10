@@ -67,6 +67,7 @@
             Name = "UserNotificationForm";
             ShowIcon = false;
             Text = "User Notification";
+            FormClosing += UserNotificationForm_FormClosing;
             VisibleChanged += UserNotificationForm_VisibleChanged;
             ResumeLayout(false);
         }

@@ -1,4 +1,6 @@
-﻿namespace CheckAddressApp
+﻿using qAcProviderTest;
+
+namespace CheckAddressApp
 {
     partial class CheckAddressForm
     {
@@ -90,7 +92,7 @@
             autosuggestButton = new Button();
             autocompleteButton = new Button();
             addressesListBoxLabel = new Label();
-            addressesFromFileListBox = new ListBox();
+            addressesFromFileListBox = new ListBoxWithScrollEvent();
             countryTextBox = new TextBox();
             inputsChoiceTabControl = new TabControl();
             tabPage2 = new TabPage();
@@ -753,7 +755,6 @@
             // addressesFromFileListBox
             // 
             addressesFromFileListBox.FormattingEnabled = true;
-            addressesFromFileListBox.HorizontalScrollbar = true;
             addressesFromFileListBox.Location = new Point(693, 55);
             addressesFromFileListBox.Name = "addressesFromFileListBox";
             addressesFromFileListBox.Size = new Size(546, 244);
@@ -1010,7 +1011,7 @@
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
         private Label addressesListBoxLabel;
-        private ListBox addressesFromFileListBox;
+        private ListBoxWithScrollEvent addressesFromFileListBox;
         private SaveFileDialog saveAsAddressesFileDialog;
         private Button autosuggestButton;
         private Button autocompleteButton;

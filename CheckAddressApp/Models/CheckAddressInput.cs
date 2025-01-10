@@ -10,8 +10,7 @@ namespace CheckAddressApp.Models
 
         public override string ToString()
         {
-
-            return $"{FreeInput} {Country}";
+            return $"{FreeInput}{(Country != null ? $" {Country.Name}" : "")}";
         }
     }
 }

@@ -35,5 +35,11 @@ namespace qAcProviderTest
                 _checkAddressForm.Enabled = false;
             }
         }
+
+        private void UserNotificationForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = true;
+            Visible = false;
+        }
     }
 }
