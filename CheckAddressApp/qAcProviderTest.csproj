@@ -6,8 +6,8 @@
     <Nullable>disable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <FileVersion>22</FileVersion>
-    <AssemblyVersion>22</AssemblyVersion>
+    <FileVersion>23</FileVersion>
+    <AssemblyVersion>23</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>

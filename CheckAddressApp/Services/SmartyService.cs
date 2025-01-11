@@ -1,6 +1,6 @@
-﻿using CheckAddressApp.Models;
-using CheckAddressApp.Services.Api;
+﻿using CheckAddressApp.Services.Api;
 using Microsoft.Extensions.Configuration;
+using qAcProviderTest.Models.CheckAddressServiceModels;
 
 namespace CheckAddressApp.Services
 {
@@ -15,7 +15,7 @@ namespace CheckAddressApp.Services
                 conf["Smarty:AuthToken"]);
         }
 
-        public override Task<ServiceData> AutocompleteAddress(CheckAddressInput input)
+        public override Task<IEnumerable<CheckAddressAddressData>> AutocompleteAddress(CheckAddressInput input)
         {
             if (input == null)
             {
@@ -23,16 +23,16 @@ namespace CheckAddressApp.Services
             }
 
             var countryCode = input.Country != null ? input.Country.TwoLetterCode : "";
-            IEnumerable<CheckAddressData> checkAddressData;
+            IEnumerable<CheckAddressAddressData> checkAddressData;
 
             if (countryCode == "US")
             {
-                var lookup = new SmartyStreets.USAutocompleteApi.Lookup(input.FreeInput);
+                var lookup = new SmartyStreets.USAutocompleteApi.Lookup(input.FullString);
 
                 _smartyAddressApiService.AutocompleteAddress(lookup);
                 var suggestions = lookup.Result ?? [];
 
-                checkAddressData = suggestions.Select(s => new CheckAddressData
+                checkAddressData = suggestions.Select(s => new CheckAddressAddressData
                 {
                     Address = s.Text,
                     Fields = getFields(s).ToArray()
@@ -40,7 +40,7 @@ namespace CheckAddressApp.Services
             }
             else
             {
-                var lookup = new SmartyStreets.InternationalAutocompleteApi.Lookup(input.FreeInput)
+                var lookup = new SmartyStreets.InternationalAutocompleteApi.Lookup(input.FullString)
                 {
                     Country = input.Country.TwoLetterCode
                 };
@@ -49,36 +49,31 @@ namespace CheckAddressApp.Services
 
                 var candidats = lookup.Result ?? [];
 
-                checkAddressData = candidats.Select(c => new CheckAddressData
+                checkAddressData = candidats.Select(c => new CheckAddressAddressData
                 {
                     Address = c.AddressText,
                     Fields = getFields(c).ToArray()
                 });
             }
 
-            var serviceData = new ServiceData
-            {
-                ServiceName = "SmartyService",
-                CheckAddressData = checkAddressData
-            };
-            var task = Task.FromResult(serviceData);
+            var task = Task.FromResult(checkAddressData);
 
             return task;
         }
 
-        public override Task<ServiceData> AutosuggestAddress(CheckAddressInput input)
+        public override Task<IEnumerable<CheckAddressAddressData>> AutosuggestAddress(CheckAddressInput input)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<ServiceData> ValidateAddress(CheckAddressInput input)
+        public override Task<IEnumerable<CheckAddressAddressData>> ValidateAddress(CheckAddressInput input)
         {
             if (input == null)
             {
                 throw new ArgumentException("Input cannot be null.");
             }
 
-            IEnumerable<CheckAddressData> checkAddressData;
+            IEnumerable<CheckAddressAddressData> checkAddressData;
             var countryCode = input.Country != null ? input.Country.TwoLetterCode : "";
 
             if (countryCode == "US")
@@ -89,7 +84,7 @@ namespace CheckAddressApp.Services
 
                 var candidats = lookup.Result ?? [];
 
-                checkAddressData = candidats.Select(c => new CheckAddressData
+                checkAddressData = candidats.Select(c => new CheckAddressAddressData
                 {
                     Address = $"{c.DeliveryLine1} {c.DeliveryLine2} {c.LastLine}",
                     Fields = getFields(c).ToArray()
@@ -102,19 +97,14 @@ namespace CheckAddressApp.Services
 
                 var candidats = lookup.Result ?? [];
 
-                checkAddressData = candidats.Select(c => new CheckAddressData
+                checkAddressData = candidats.Select(c => new CheckAddressAddressData
                 {
                     Address = $"{c.Address1} {c.Address2} {c.Address3}",
                     Fields = getFields(c).ToArray()
                 });
             }
 
-            var serviceData = new ServiceData
-            {
-                ServiceName = "SmartyService",
-                CheckAddressData = checkAddressData
-            };
-            var task = Task.FromResult(serviceData);
+            var task = Task.FromResult(checkAddressData);
 
             return task;
         }
@@ -126,14 +116,16 @@ namespace CheckAddressApp.Services
                 throw new ArgumentException("Input cannot be null.");
             }
 
-            var lookup = new SmartyStreets.USStreetApi.Lookup(input.FreeInput);
+            var lookup = new SmartyStreets.USStreetApi.Lookup(input.FullString);
 
-            if (input.StructuredInput != null)
+            if (input is CheckAddressStructuredInput)
             {
-                lookup.ZipCode = input.StructuredInput.PostalCode;
-                lookup.City = input.StructuredInput.City;
-                lookup.Urbanization = input.StructuredInput.District;
-                lookup.Street2 = input.StructuredInput.StreetAndHouseNumber;
+                var structuredInput = (CheckAddressStructuredInput)input;
+
+                lookup.ZipCode = structuredInput.PostalCode;
+                lookup.City = structuredInput.City;
+                lookup.Urbanization = structuredInput.District;
+                lookup.Street2 = structuredInput.StreetAndHouseNumber;
             }
 
             return lookup;
@@ -145,14 +137,16 @@ namespace CheckAddressApp.Services
                 throw new ArgumentException("Input cannot be null.");
             }
 
-            var lookup = new SmartyStreets.InternationalStreetApi.Lookup(input.FreeInput, input.Country.TwoLetterCode);
+            var lookup = new SmartyStreets.InternationalStreetApi.Lookup(input.FullString, input.Country.TwoLetterCode);
 
-            if (input.StructuredInput != null)
+            if (input is CheckAddressStructuredInput)
             {
-                lookup.PostalCode = input.StructuredInput.PostalCode;
-                lookup.Locality = input.StructuredInput.City;
-                lookup.Address2 = input.StructuredInput.District;
-                lookup.Address1 = input.StructuredInput.StreetAndHouseNumber;
+                var structuredInput = (CheckAddressStructuredInput)input;
+
+                lookup.PostalCode = structuredInput.PostalCode;
+                lookup.Locality = structuredInput.City;
+                lookup.Address2 = structuredInput.District;
+                lookup.Address1 = structuredInput.StreetAndHouseNumber;
             }
 
             return lookup;

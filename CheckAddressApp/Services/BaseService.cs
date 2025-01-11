@@ -1,12 +1,12 @@
-﻿using CheckAddressApp.Models;
+﻿using qAcProviderTest.Models.CheckAddressServiceModels;
 
 namespace CheckAddressApp.Services
 {
     public abstract class BaseService
     {
-        public abstract Task<ServiceData> AutosuggestAddress(CheckAddressInput input);
-        public abstract Task<ServiceData> AutocompleteAddress(CheckAddressInput input);
-        public abstract Task<ServiceData> ValidateAddress(CheckAddressInput input);
+        public abstract Task<IEnumerable<CheckAddressAddressData>> AutosuggestAddress(CheckAddressInput input);
+        public abstract Task<IEnumerable<CheckAddressAddressData>> AutocompleteAddress(CheckAddressInput input);
+        public abstract Task<IEnumerable<CheckAddressAddressData>> ValidateAddress(CheckAddressInput input);
 
         protected virtual IEnumerable<CheckAddressField> getFields(object @object, string name = null)
         {

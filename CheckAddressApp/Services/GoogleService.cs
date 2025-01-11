@@ -1,9 +1,9 @@
-﻿using CheckAddressApp.Models;
-using CheckAddressApp.Models.Google.Autocomplete;
+﻿using CheckAddressApp.Models.Google.Autocomplete;
 using CheckAddressApp.Models.Google.Details;
 using CheckAddressApp.Services.Api;
 using CheckAddressWeb.Models.Google.Validation;
 using Microsoft.Extensions.Configuration;
+using qAcProviderTest.Models.CheckAddressServiceModels;
 
 namespace CheckAddressApp.Services
 {
@@ -19,19 +19,19 @@ namespace CheckAddressApp.Services
                 conf["Google:RefreshToken"]);
         }
 
-        public override Task<ServiceData> AutosuggestAddress(CheckAddressInput input)
+        public override Task<IEnumerable<CheckAddressAddressData>> AutosuggestAddress(CheckAddressInput input)
         {
             throw new NotImplementedException();
         }
 
-        public override async Task<ServiceData> AutocompleteAddress(CheckAddressInput input)
+        public override async Task<IEnumerable<CheckAddressAddressData>> AutocompleteAddress(CheckAddressInput input)
         {
             if (input == null)
             {
                 throw new ArgumentException("Input cannot be null.");
             }
 
-            var request = new AutocompleteAddressRequest(input.FreeInput)
+            var request = new AutocompleteAddressRequest(input.FullString)
             {
                 RegionCode = input.Country != null ? input.Country.TwoLetterCode : ""
             };
@@ -44,7 +44,7 @@ namespace CheckAddressApp.Services
             }
 
             var addressIds = autocompleteAddressResponse.Suggestions?.Select(s => s.PlacePrediction.PlaceId) ?? [];
-            var checkAddressData = new List<CheckAddressData>();
+            var checkAddressData = new List<CheckAddressAddressData>();
 
             foreach (var id in addressIds)
             {
@@ -55,7 +55,7 @@ namespace CheckAddressApp.Services
                     throw new Exception("Details address response is null.");
                 }
 
-                var checkAddressDataItem = new CheckAddressData
+                var checkAddressDataItem = new CheckAddressAddressData
                 {
                     Address = detailsResponse.FormattedAddress,
                     Fields = getFields(detailsResponse).ToArray()
@@ -64,16 +64,10 @@ namespace CheckAddressApp.Services
                 checkAddressData.Add(checkAddressDataItem);
             }
 
-            var serviceData = new ServiceData
-            {
-                ServiceName = "GoogleService",
-                CheckAddressData = checkAddressData
-            };
-
-            return serviceData;
+            return checkAddressData;
         }
 
-        public override async Task<ServiceData> ValidateAddress(CheckAddressInput input)
+        public override async Task<IEnumerable<CheckAddressAddressData>> ValidateAddress(CheckAddressInput input)
         {
             if (input == null)
             {
@@ -83,13 +77,8 @@ namespace CheckAddressApp.Services
             var request = getValidationRequest(input);
             var validateAddressResponse = await _googleAddressApiService.ValidateAddress(request);
             var checkAddressData = getCheckAddressData(validateAddressResponse);
-            var serviceData = new ServiceData
-            {
-                ServiceName = "GoogleService",
-                CheckAddressData = checkAddressData
-            };
 
-            return serviceData;
+            return checkAddressData;
         }
 
         private async Task<PlaceDetailsResponse> getPlaceDetails(string placeId, string fields)
@@ -99,19 +88,19 @@ namespace CheckAddressApp.Services
             return place;
         }
 
-        private List<CheckAddressData> getCheckAddressData(ValidateAddressResponse validateAddressResponse)
+        private List<CheckAddressAddressData> getCheckAddressData(ValidateAddressResponse validateAddressResponse)
         {
             if (validateAddressResponse == null)
             {
                 throw new Exception("Validate address response cannot be null.");
             }
 
-            var checkAddressDataItem = new CheckAddressData
+            var checkAddressDataItem = new CheckAddressAddressData
             {
                 Address = validateAddressResponse.Result?.Address?.FormattedAddress,
                 Fields = getFields(validateAddressResponse.Result).ToArray()
             };
-            var checkAddressData = new List<CheckAddressData>
+            var checkAddressData = new List<CheckAddressAddressData>
             {
                 checkAddressDataItem
             };
@@ -131,14 +120,16 @@ namespace CheckAddressApp.Services
                 RegionCode = input.Country != null ? input.Country.TwoLetterCode : ""
             };
 
-            if (input.StructuredInput != null)
+            if (input is CheckAddressStructuredInput)
             {
-                address.Locality = input.StructuredInput.City;
-                address.PostalCode = input.StructuredInput.PostalCode;
-                address.Sublocality = input.StructuredInput.District;
+                var structuredInput = (CheckAddressStructuredInput)input;
+
+                address.Locality = structuredInput.City;
+                address.PostalCode = structuredInput.PostalCode;
+                address.Sublocality = structuredInput.District;
             }
 
-            address.AddressLines = [input.FreeInput];
+            address.AddressLines = [input.FullString];
 
             var addressValidationRequest = new ValidateAddressRequest
             {

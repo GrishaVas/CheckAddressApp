@@ -2,28 +2,22 @@
 
 namespace CheckAddressApp.Models
 {
-    public class StructuredInput
+    public class AddressFromFile
     {
         public string StreetAndHouseNumber { get; set; }
         public string City { get; set; }
         public string District { get; set; }
         public string PostalCode { get; set; }
+        public string Country { get; set; }
 
-        public override string ToString()
-        {
-            return (PostalCode != "" ? $"{PostalCode} " : "") +
-                (City != "" ? $"{City} " : "") +
-                (District != "" ? $"{District} " : "") +
-                (StreetAndHouseNumber != "" ? $"{StreetAndHouseNumber} " : "");
-        }
-
-        public string ToString(string format)
+        public string GetString(string format, bool withCountry = true)
         {
             var strBuilder = new StringBuilder(format)
                 .Replace("$PostalCode", PostalCode != "" ? $"{PostalCode}" : "")
                 .Replace("$City", City != "" ? $"{City}" : "")
                 .Replace("$District", District != "" ? $"{District}" : "")
-                .Replace("$StreetAndHouseNumber", StreetAndHouseNumber != "" ? $"{StreetAndHouseNumber}" : "");
+                .Replace("$StreetAndHouseNumber", StreetAndHouseNumber != "" ? $"{StreetAndHouseNumber}" : "")
+                .Replace("$Country", withCountry ? (Country != "" ? $"{Country}" : "") : "");
 
             var index = 0;
 

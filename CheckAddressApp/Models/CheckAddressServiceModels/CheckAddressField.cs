@@ -1,4 +1,4 @@
-﻿namespace CheckAddressApp.Models
+﻿namespace qAcProviderTest.Models.CheckAddressServiceModels
 {
     public class CheckAddressField
     {

@@ -1,22 +1,29 @@
 ﻿using System.Text;
+using ISO3166;
 
-namespace qAcProviderTest.Models.FormInputs
+namespace qAcProviderTest.Models.CheckAddressServiceModels
 {
-    public class CheckAddressFormStructuredInput : CheckAddressFormInput
+    public class CheckAddressStructuredInput : CheckAddressInput
     {
         public string StreetAndHouseNumber { get; set; }
         public string City { get; set; }
         public string District { get; set; }
         public string PostalCode { get; set; }
 
-        public void SetString(string format)
+        public CheckAddressStructuredInput(string streetAndHouseNumber, string city, string district, string postalCode, Country country, string format)
         {
+            StreetAndHouseNumber = streetAndHouseNumber;
+            City = city;
+            District = district;
+            PostalCode = postalCode;
+            Country = country;
+
             var strBuilder = new StringBuilder(format)
                 .Replace("$PostalCode", PostalCode != "" ? $"{PostalCode}" : "")
                 .Replace("$City", City != "" ? $"{City}" : "")
                 .Replace("$District", District != "" ? $"{District}" : "")
                 .Replace("$StreetAndHouseNumber", StreetAndHouseNumber != "" ? $"{StreetAndHouseNumber}" : "")
-                .Replace("$Country", Country.TwoLetterCode != "" ? $"{Country}" : "");
+                .Replace("$Country", !string.IsNullOrEmpty(Country?.TwoLetterCode ?? "") ? $"{Country.TwoLetterCode}" : "");
 
             var index = 0;
 
@@ -33,7 +40,7 @@ namespace qAcProviderTest.Models.FormInputs
 
             var result = strBuilder.ToString();
 
-            String = result;
+            base.FullString = result;
         }
     }
 }

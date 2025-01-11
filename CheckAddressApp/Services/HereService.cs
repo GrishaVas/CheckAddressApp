@@ -1,7 +1,7 @@
-﻿using CheckAddressApp.Models;
-using CheckAddressApp.Models.Here;
+﻿using CheckAddressApp.Models.Here;
 using CheckAddressApp.Services.Api;
 using Microsoft.Extensions.Configuration;
+using qAcProviderTest.Models.CheckAddressServiceModels;
 
 namespace CheckAddressApp.Services
 {
@@ -14,7 +14,7 @@ namespace CheckAddressApp.Services
             _hereAddressApiService = new HereAddressApiService(conf["Here:ApiKey"]);
         }
 
-        public override async Task<ServiceData> AutosuggestAddress(CheckAddressInput input)
+        public override async Task<IEnumerable<CheckAddressAddressData>> AutosuggestAddress(CheckAddressInput input)
         {
             if (input == null)
             {
@@ -22,7 +22,7 @@ namespace CheckAddressApp.Services
             }
 
             var countryCode = input.Country != null ? input.Country.ThreeLetterCode : "";
-            var hereValidateRequest = new ValidateAddressRequest(input.FreeInput)
+            var hereValidateRequest = new ValidateAddressRequest(input.FullString)
             {
                 In = countryCode
             };
@@ -33,24 +33,20 @@ namespace CheckAddressApp.Services
                 throw new Exception($"Here validate response is null.");
             }
 
-            var checkAddressData = new List<CheckAddressData>();
+            var checkAddressData = new List<CheckAddressAddressData>();
             var hereValidateResponseItems = hereValidateResponse.Items ?? [];
             var hereValidatrResponseItem = hereValidateResponseItems.FirstOrDefault();
 
             if (hereValidatrResponseItem == null)
             {
-                return new ServiceData
-                {
-                    ServiceName = "HereService",
-                    CheckAddressData = []
-                };
+                return [];
             }
 
             var position = hereValidatrResponseItem.Position;
             //foreach (var item in hereValidateResponseItems.Take(5))
             //{
-            var hereAutosuggestResponse = await getAutosuggestAddress(input.FreeInput, countryCode, position);
-            var ids = hereAutosuggestResponse.Items.Select(i => i.Id);
+            var hereAutosuggestResponse = await getAutosuggestAddress(input.FullString, countryCode, position);
+            var ids = hereAutosuggestResponse.Items.Select(i => i.Id).Take(5);
 
             foreach (var id in ids)
             {
@@ -65,29 +61,23 @@ namespace CheckAddressApp.Services
             }
             //}
 
-            var serviceData = new ServiceData
-            {
-                ServiceName = "HereService",
-                CheckAddressData = checkAddressData
-            };
-
-            return serviceData;
+            return checkAddressData;
         }
 
-        public override async Task<ServiceData> AutocompleteAddress(CheckAddressInput input)
+        public override async Task<IEnumerable<CheckAddressAddressData>> AutocompleteAddress(CheckAddressInput input)
         {
             if (input == null)
             {
                 throw new ArgumentException("Input cannot be null.");
             }
 
-            var hereAutocompleteRequest = new AutocompleteAddressRequest(input.FreeInput)
+            var hereAutocompleteRequest = new AutocompleteAddressRequest(input.FullString)
             {
                 In = input.Country != null ? input.Country.ThreeLetterCode : ""
             };
             var hereAutocompleteResponse = await _hereAddressApiService.AutocompleteAddress(hereAutocompleteRequest);
             var addressIds = hereAutocompleteResponse?.Items?.Select(i => i.Id);
-            var checkAddressData = new List<CheckAddressData>();
+            var checkAddressData = new List<CheckAddressAddressData>();
 
             if (addressIds == null)
             {
@@ -104,7 +94,7 @@ namespace CheckAddressApp.Services
                     throw new Exception("Here lookup response is null.");
                 }
 
-                var checkAddressDataItem = new CheckAddressData
+                var checkAddressDataItem = new CheckAddressAddressData
                 {
                     Address = hereLookupResponse.Address.Label,
                     Fields = getFields(hereLookupResponse).ToArray()
@@ -113,27 +103,16 @@ namespace CheckAddressApp.Services
                 checkAddressData.Add(checkAddressDataItem);
             }
 
-            var serviceData = new ServiceData
-            {
-                ServiceName = "HereService",
-                CheckAddressData = checkAddressData
-            };
-
-            return serviceData;
+            return checkAddressData;
         }
 
-        public override async Task<ServiceData> ValidateAddress(CheckAddressInput input)
+        public override async Task<IEnumerable<CheckAddressAddressData>> ValidateAddress(CheckAddressInput input)
         {
             var request = getValidationRequest(input);
             var validateAddressResponse = await _hereAddressApiService.ValidateAddress(request);
             var checkAddressData = getCheckAddressData(validateAddressResponse);
-            var serviceData = new ServiceData
-            {
-                ServiceName = "HereService",
-                CheckAddressData = checkAddressData
-            };
 
-            return serviceData;
+            return checkAddressData;
         }
 
         public void Dispose()
@@ -158,14 +137,14 @@ namespace CheckAddressApp.Services
             return responses;
         }
 
-        private CheckAddressData getCheckAddressData(LookupAddressResponse lookupAddresResponse)
+        private CheckAddressAddressData getCheckAddressData(LookupAddressResponse lookupAddresResponse)
         {
             if (lookupAddresResponse == null)
             {
                 throw new Exception("Lookup address response is null.");
             }
 
-            var checkAddressData = new CheckAddressData
+            var checkAddressData = new CheckAddressAddressData
             {
                 Address = lookupAddresResponse.Address.Label,
                 Fields = getFields(lookupAddresResponse).ToArray()
@@ -174,14 +153,14 @@ namespace CheckAddressApp.Services
             return checkAddressData;
         }
 
-        private IEnumerable<CheckAddressData> getCheckAddressData(ValidateAddressResponse validateAddresResponse)
+        private IEnumerable<CheckAddressAddressData> getCheckAddressData(ValidateAddressResponse validateAddresResponse)
         {
             if (validateAddresResponse == null)
             {
                 throw new Exception("Validate address response is null.");
             }
 
-            var checkAddressData = validateAddresResponse.Items?.Select(i => new CheckAddressData
+            var checkAddressData = validateAddresResponse.Items?.Select(i => new CheckAddressAddressData
             {
                 Address = i.Address.Label,
                 Fields = getFields(i).ToArray()
@@ -190,14 +169,14 @@ namespace CheckAddressApp.Services
             return checkAddressData;
         }
 
-        private IEnumerable<CheckAddressData> getCheckAddressData(AutosuggestAddressResponse autosuggestAddressResponse)
+        private IEnumerable<CheckAddressAddressData> getCheckAddressData(AutosuggestAddressResponse autosuggestAddressResponse)
         {
             if (autosuggestAddressResponse == null)
             {
                 throw new Exception("Autosuggest address response is null.");
             }
 
-            var checkAddressData = autosuggestAddressResponse.Items?.Select(i => new CheckAddressData
+            var checkAddressData = autosuggestAddressResponse.Items?.Select(i => new CheckAddressAddressData
             {
                 Address = i.Address.Label,
                 Fields = getFields(i).ToArray()
@@ -232,7 +211,7 @@ namespace CheckAddressApp.Services
                 throw new ArgumentException("Input cannot be null.");
             }
 
-            var validateAddressRequest = new ValidateAddressRequest(input.FreeInput)
+            var validateAddressRequest = new ValidateAddressRequest(input.FullString)
             {
                 In = input.Country != null ? input.Country.ThreeLetterCode : ""
             };

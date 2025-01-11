@@ -7,7 +7,7 @@ namespace qAcProviderTest.Services
 {
     public static class CsvFileService
     {
-        public static async Task<IEnumerable<CheckAddressInput>> getCheckAddressInputsFromCsvFile(string path, string checkAddressInputOneLineInputFromat)
+        public static async Task<IEnumerable<AddressFromFile>> getCheckAddressInputsFromCsvFile(string path, string checkAddressInputOneLineInputFromat)
         {
             if (!File.Exists(path))
             {
@@ -27,48 +27,60 @@ namespace qAcProviderTest.Services
             using var csv = new CsvReader(reader2, CultureInfo.InvariantCulture);
 
 
-            var records = csv.GetRecords<InputFromFile>().ToList();
-            var checkAddressInputs = records.Select(r => getCheckAddressInput(r, checkAddressInputOneLineInputFromat));
+            var checkAddressInputs = csv.GetRecords<AddressFromFile>().ToList();
 
             return checkAddressInputs;
         }
 
-
-        //private static async Task<string> getCsvContent(string path)
-        //{
-        //    var stream = File.OpenRead(path);
-
-        //    using (var reader = new StreamReader(stream))
-        //    {
-        //        var inputFileStr = await reader.ReadToEndAsync();
-
-        //        return inputFileStr;
-        //    }
-        //}
-
-        private static CheckAddressInput getCheckAddressInput(InputFromFile inputFromFile, string oneLineFormat)
+        public static async Task insertIntoAddressesFile(string path, AddressFromFile input, int index)
         {
-            var country = ISO3166.Country.List.FirstOrDefault(c => c.Name.ToLower() == inputFromFile.Country.ToLower());
-            var checkAddressInput = new CheckAddressInput
+            if (!File.Exists(path))
             {
-                Country = country,
-                StructuredInput = new StructuredInput
-                {
-                    City = inputFromFile.City,
-                    District = inputFromFile.District,
-                    PostalCode = inputFromFile.PostalCode,
-                    StreetAndHouseNumber = inputFromFile.StreetAndHouseNumber
-                }
-            };
+                throw new Exception("Cannot find the file.");
+            }
 
-            checkAddressInput.FreeInput = checkAddressInput.StructuredInput.ToString(oneLineFormat);
+            const string rowSep = "\r\n";
+            const string wordSep = ",";
+            var text = await File.ReadAllTextAsync(path);
+            var rows = text.Split(rowSep);
+            var words = rows[0].Split(wordSep);
+            var props = typeof(AddressFromFile).GetProperties().Where(p => words.Contains(p.Name));
+            var values = new List<string>();
 
-            return checkAddressInput;
+            foreach (var word in words)
+            {
+                var prop = props.FirstOrDefault(p => p.Name == word);
+                var value = prop?.GetValue(input);
+
+                values.Add(value?.ToString() ?? "");
+            }
+
+            var stringStart = $"{string.Join("\r\n", rows.Take(index + 1))}\r\n{string.Join(",", values)}\r\n";
+            string result = stringStart + string.Join("\r\n", rows.Skip(index + 1));
+
+            await File.WriteAllTextAsync(path, result);
+        }
+
+        public static async Task removeFromAddressesFile(string path, int rowIndex)
+        {
+            if (!File.Exists(path))
+            {
+                throw new Exception("Cannot find the file.");
+            }
+
+            const string rowSep = "\r\n";
+            var text = await File.ReadAllTextAsync(path);
+            var rows = text.Split(rowSep).ToList();
+
+            rows.RemoveAt(rowIndex + 1);
+
+            string result = string.Join("\r\n", rows);
+
+            await File.WriteAllTextAsync(path, result);
         }
 
         private static void validateCsv(string csvContent)
         {
-            var inputsFromFile = new List<CheckAddressInput>();
             const string rowsSep = "\r\n";
             var rows = csvContent.Split(rowsSep, StringSplitOptions.RemoveEmptyEntries);
 
@@ -83,23 +95,6 @@ namespace qAcProviderTest.Services
             {
                 throw new Exception(errorMessage);
             }
-
-            //var propNames = rows[0].Split(wordsSep);
-
-            //foreach (var row in rows.Skip(1))
-            //{
-            //    var values = row.Split(wordsSep);
-            //    var inputFromFile = getInputFromFile(propNames, values);
-
-            //    if (inputFromFile != null)
-            //    {
-            //        var chechAddressInput = getCheckAddressInput(inputFromFile, checkAddressInputOneLineInputFromat);
-
-            //        inputsFromFile.Add(chechAddressInput);
-            //    }
-            //}
-
-            //return inputsFromFile;
         }
 
         private static bool isCsvValid(string csvText, string csvHeadRow, out string errorMessage)
@@ -128,31 +123,5 @@ namespace qAcProviderTest.Services
             errorMessage = null;
             return true;
         }
-
-        //private static InputFromFile getInputFromFile(string[] propNames, string[] values)
-        //{
-        //    var inputFormFile = new InputFromFile();
-        //    var inputFormFileType = typeof(InputFromFile);
-        //    var inputFormFileProps = inputFormFileType.GetProperties();
-        //    var mathcesCount = inputFormFileProps.Where(p => propNames.Contains(p.Name)).Count();
-
-        //    if (mathcesCount == 0)
-        //    {
-        //        return null;
-        //    }
-
-
-        //    for (int i = 0; i < propNames.Length; i++)
-        //    {
-        //        var prop = inputFormFileProps.FirstOrDefault(p => p.Name == propNames[i]);
-
-        //        if (prop != null)
-        //        {
-        //            prop.SetValue(inputFormFile, values[i]);
-        //        }
-        //    }
-
-        //    return inputFormFile;
-        //}
     }
 }
